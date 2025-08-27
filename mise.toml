@@ -1,7 +1,11 @@
 [tools]
 awscli = 'latest'
+black = 'latest'
+jq = 'latest'
+node = 'latest'
 pre-commit = 'latest'
 python = '3.11'
+ruff = 'latest'
 shellcheck = 'latest'
 starship = 'latest'
 terraform = '1.5.7'

@@ -91,6 +91,8 @@ repos:
       #    - --args=--config=.tfdocs-config.yml
       - id: terraform_fmt
       - id: terraform_validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
         # [^/]+: Exclude root module. Validation is done via examples/basic
         # see https://github.com/antonbabenko/pre-commit-terraform#terraform_validate
         exclude: |
@@ -102,12 +104,17 @@ repos:
         # Configure tflint by creating and updating the config file below.
         args: ["--args=--config=__GIT_WORKING_DIR__/.tflint.hcl"]
 
-  # Python
+  # PYTHON
+  # ruff - must be placed before other repos
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.11.13
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
       - id: black
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
-    hooks:
-      - id: flake8
