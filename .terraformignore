@@ -1,0 +1,3 @@
+# https://developer.hashicorp.com/terraform/cli/cloud/settings#excluding-files-from-upload-with-terraformignore
+
+.venv

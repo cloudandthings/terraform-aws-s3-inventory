@@ -1,0 +1,28 @@
+name: release
+
+# Overview ref: https://github.com/googleapis/release-please
+# Configuration ref: https://github.com/googleapis/release-please-action
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  release:
+    name: 🙏 release-please
+    # For public repos use runs-on: ubuntu-latest
+    # For private repos use runs-on: codebuild-...
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      tag_name: ${{ steps.release-please.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: release-please
+        uses: googleapis/release-please-action@v4
+        id: release-please

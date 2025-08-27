@@ -1,0 +1,89 @@
+name: pre-commit & tests
+
+env:
+  AWS_REGION: af-south-1
+  AWS_ROLE_ARN: arn:aws:iam::353444730604:role/cat-genrl-prd-infra-github-workflows
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+concurrency:
+  # https://stackoverflow.com/questions/66335225/how-to-cancel-previous-runs-in-the-pr-when-you-push-new-commitsupdate-the-curre
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  # Enabling cancel-in-progress can cause non-graceful Terraform
+  # exit which leaves the state file in a locked state
+  #
+  # cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+defaults:
+  # Set shell for steps inside containers (default=sh)
+  run:
+    shell: bash
+
+jobs:
+  #--------------------------------------------------------------
+  # PRE-COMMIT
+  #--------------------------------------------------------------
+  pre_commit:
+    name: 💍 pre-commit
+    # For public repos use runs-on: ubuntu-latest
+    # For private repos use runs-on: codebuild-...
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jdx/mise-action@v2
+        with:
+          log_level: debug
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: pre-commit run
+        run: |
+          echo ...running pre-commit checks...
+          pre-commit run --config .pre-commit-config.yaml --all-files --show-diff-on-failure
+
+  #--------------------------------------------------------------
+  # TESTS
+  #--------------------------------------------------------------
+  tests:
+    name: ✅ tests
+    needs: [pre_commit]
+    # For public repos use runs-on: ubuntu-latest
+    # For private repos use runs-on: codebuild-...
+    runs-on: codebuild-${{ github.repository_owner }}-${{ github.event.repository.name }}-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jdx/mise-action@v2
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-duration-seconds: 3600
+
+      - name: Install requirements
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r tests/requirements.txt
+
+      - name: Run
+        run: |
+          source .venv/bin/activate
+          echo "::echo::off"
+          pytest
+        env:
+          PYTEST_ADDOPTS: "--color=yes"
+        timeout-minutes: 10

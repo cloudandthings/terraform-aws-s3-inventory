@@ -1,0 +1,9 @@
+[tools]
+awscli = 'latest'
+pre-commit = 'latest'
+python = '3.11'
+shellcheck = 'latest'
+starship = 'latest'
+terraform = '1.5.7'
+terraform-docs = 'latest'
+tflint = 'latest'
