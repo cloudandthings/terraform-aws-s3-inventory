@@ -8,7 +8,7 @@ A comprehensive Terraform module for managing AWS S3 inventory configurations, i
 - **S3 Inventory Management**: Creates and configures S3 inventory reports for multiple source buckets
 - **Glue Catalog Integration**: Sets up Glue database and tables for querying inventory data
 - **Unified View**: Optional creation of a union view across all inventory tables for cross-bucket analysis
-- **Security & Compliance**: Configurable encryption, object locking, and IAM permissions
+- **Security & Compliance**: Configurable encryption, object locking, and IAM and LakeFormation permissions
 - **Lifecycle Management**: Automated lifecycle rules for inventory report retention
 
 Many features are optional and can be enabled/disabled as required.
@@ -35,8 +35,14 @@ module "s3_inventory" {
 
   # Optional: Create a union view for cross-bucket queries
   union_view_name = "all_inventories_view"
+
+  # Optional: Add LakeFormation permissions
+  # database_admin_principals = [...]
+  # database_read_principals = [...]
+
 }
 ```
+
 
 ----
 ## Usage
