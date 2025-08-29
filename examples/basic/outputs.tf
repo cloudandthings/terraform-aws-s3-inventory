@@ -1,4 +1,4 @@
-output "module_example" {
-  description = "module.example"
-  value       = module.example
+output "module_inventory" {
+  description = "module.inventory"
+  value       = module.inventory
 }

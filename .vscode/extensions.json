@@ -1,11 +1,13 @@
 {
     "recommendations": [
-        "medo64.render-crlf",
+        "amazonwebservices.aws-toolkit-vscode",
+        "aquasecurityofficial.trivy-vulnerability-scanner",
+        "davidanson.vscode-markdownlint",
         "hashicorp.terraform",
         "redhat.vscode-yaml",
-        "ms-python.python",
-        "mutantdino.resourcemonitor",
         "ms-azuretools.vscode-containers",
-        "aquasecurityofficial.trivy-vulnerability-scanner"
+        "ms-python.black-formatter",
+        "ms-python.python",
+        "ms-python.vscode-pylance"
     ]
 }
