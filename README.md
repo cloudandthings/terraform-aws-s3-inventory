@@ -47,7 +47,7 @@ module "s3_inventory" {
 ----
 ## Usage
 
-See examples dropdown on Terraform Cloud, or [browse the GitHub repo](https://github.com/cloudandthings/terraform-aws-s3-inventory/examples/).
+See examples dropdown on Terraform Cloud, or [browse the GitHub repo](https://github.com/cloudandthings/terraform-aws-s3-inventory/tree/main/examples/).
 
 ----
 
@@ -110,7 +110,7 @@ Choose your start date based on either:
 
 Direct contributions are welcome.
 
-See [`CONTRIBUTING.md`](https://github.com/cloudandthings/terraform-aws-s3-inventory/.github/CONTRIBUTING.md) for further information.
+See [`CONTRIBUTING.md`](https://github.com/cloudandthings/terraform-aws-s3-inventory/tree/main/.github/CONTRIBUTING.md) for further information.
 
 
 ----
