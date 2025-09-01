@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0 (2025-09-01)
+
+
+### Features
+
+* Initial release ([170cdb0](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/170cdb0dad51ed194088aa67cee347bfc0e01b93))
+* Initial release ([91758a0](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/91758a00dd106b59db52314bb4abb603ac4a33b9))
+
 ## [1.2.0](https://github.com/cloudandthings/terraform-aws-template/compare/v1.1.0...v1.2.0) (2023-05-05)
 
 
