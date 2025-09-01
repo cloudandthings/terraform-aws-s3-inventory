@@ -47,7 +47,7 @@ module "s3_inventory" {
 ----
 ## Usage
 
-See `examples` dropdown on Terraform Cloud, or [browse here](/examples/).
+See examples dropdown on Terraform Cloud, or [browse the GitHub repo](https://github.com/cloudandthings/terraform-aws-s3-inventory/examples/).
 
 ----
 
@@ -80,15 +80,15 @@ ORDER BY total_size DESC;
 
 ### Athena Partition Date Projection
 
-As of 2025, Amazon Athena does not properly support dynamic range projection with the S3 inventory partitioning scheme. When using a dynamic range like `"NOW-3MONTHS,NOW"`, the Glue tables will return zero rows.
+As of 2025, Amazon Athena does not properly support dynamic range projection with the S3 inventory partitioning scheme. When using a dynamic range like `"NOW-3MONTHS,NOW"` with this module, the Glue tables will return zero rows.
 
-To work around this limitation, this Terraform module defaults to using the beginning of the previous year as the start date. The year is calculated based on when the Terraform plan runs. For example, if today is 2025-08-25, the date range will be set to `"2024-01-01-00-00,NOW"`.
+To work around this limitation, this Terraform module defaults to using the beginning of the previous year as the start date. The year is calculated based on when the Terraform plan runs. For example, if today is `2025-08-25`, the date range will be defaulted to `"2024-01-01-00-00,NOW"`.
 
 **Important:** This approach causes Terraform state drift annually when the year changes.
 
 ### Workaround
 
-To avoid state drift, provide a fixed start date such as:
+To avoid state drift, provide a fixed start date for partition projection, such as:
 
 `athena_projection_dt_range = "2025-08-01-00-00,NOW"`
 
@@ -110,7 +110,7 @@ Choose your start date based on either:
 
 Direct contributions are welcome.
 
-See [`CONTRIBUTING.md`](./.github/CONTRIBUTING.md) for further information.
+See [`CONTRIBUTING.md`](https://github.com/cloudandthings/terraform-aws-s3-inventory/.github/CONTRIBUTING.md) for further information.
 
 
 ----
