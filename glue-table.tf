@@ -23,12 +23,13 @@ resource "aws_glue_catalog_table" "s3_inventory" {
   table_type    = "EXTERNAL_TABLE"
 
   parameters = {
-    "projection.enabled"          = "true"
-    "projection.dt.type"          = "date"
+    # Lexicographical order to prevent TF plan drift
     "projection.dt.format"        = "yyyy-MM-dd-HH-mm"
-    "projection.dt.range"         = local.athena_projection_dt_range
     "projection.dt.interval"      = "1"
     "projection.dt.interval.unit" = "HOURS"
+    "projection.dt.range"         = local.athena_projection_dt_range
+    "projection.dt.type"          = "date"
+    "projection.enabled"          = "true"
   }
 
   partition_keys {
