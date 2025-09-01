@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.0...v1.0.1) (2025-09-01)
+
+
+### Bug Fixes
+
+* Avoid drift due to table parameters order ([18f8a40](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/18f8a40a185425b5f9771d6fbe6ae8c98f567344))
+
 ## 1.0.0 (2025-09-01)
 
 
