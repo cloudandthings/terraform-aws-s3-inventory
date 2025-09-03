@@ -58,4 +58,11 @@ resource "aws_glue_catalog_table" "s3_inventory" {
       }
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      # Ignore ordering changes in parameters map
+      parameters,
+    ]
+  }
 }
