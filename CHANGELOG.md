@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.1...v1.0.2) (2025-09-03)
+
+
+### Bug Fixes
+
+* Add lifecycle block to ignore changes in parameters ([fd29b7f](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/fd29b7fe43a6ffe951c7a4120ff27cc0534ac10f))
+
 ## [1.0.1](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.0...v1.0.1) (2025-09-01)
 
 
