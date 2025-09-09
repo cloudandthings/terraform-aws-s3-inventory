@@ -17,8 +17,9 @@ locals {
 }
 
 resource "aws_glue_catalog_table" "s3_inventory" {
-  count         = length(var.source_bucket_names)
-  name          = var.source_bucket_names[count.index]
+  for_each = local.source_bucket_names
+
+  name          = each.value
   database_name = local.inventory_database_name
   table_type    = "EXTERNAL_TABLE"
 
@@ -38,7 +39,7 @@ resource "aws_glue_catalog_table" "s3_inventory" {
   }
 
   storage_descriptor {
-    location      = "s3://${local.inventory_bucket_name}/${var.source_bucket_names[count.index]}/${var.inventory_config_name}/hive/"
+    location      = "s3://${local.inventory_bucket_name}/${each.value}/${var.inventory_config_name}/hive/"
     input_format  = "org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 

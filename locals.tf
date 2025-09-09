@@ -2,6 +2,9 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
   region     = data.aws_region.current.region
 
+  # Deterministic naming of resources
+  source_bucket_names = toset(var.source_bucket_names)
+
   # Ensure Terraform can plan dependencies correctly
   inventory_bucket_name = (
     var.create_inventory_bucket
