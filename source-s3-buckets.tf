@@ -1,7 +1,7 @@
 resource "aws_s3_bucket_inventory" "this" {
 
   for_each = {
-    for bucket in var.source_bucket_names :
+    for bucket in local.source_bucket_names :
     bucket => local.inventory_configuration
     if var.enable_bucket_inventory_configs
   }
