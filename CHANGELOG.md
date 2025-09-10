@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.2...v1.0.3) (2025-09-10)
+
+
+### Bug Fixes
+
+* Use for_each instead of count to avoid unnecessary glue table replacements ([824d895](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/824d895333b357154ae0d043dde4054833b7bedf))
+
 ## [1.0.2](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.1...v1.0.2) (2025-09-03)
 
 
