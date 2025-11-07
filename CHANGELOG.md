@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.3...v1.1.0) (2025-11-07)
+
+
+### Features
+
+* Add descriptions for Glue database and tables, and update data sources ([6cb3c52](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/6cb3c52dc5597a774366912d5ed47d0a8a2cea2d))
+
+
+### Bug Fixes
+
+* Use for_each instead of count to avoid unnecessary lakeformation permissions changes ([d009136](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/d009136a09b970091c8db4ea8a3ba77295a3d4a7))
+
 ## [1.0.3](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.2...v1.0.3) (2025-09-10)
 
 
