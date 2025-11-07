@@ -1,10 +1,19 @@
+locals {
+  # Convert lists to maps which avoid noisy TF plans when the lists change
+  database_admin_principals = {
+    for p in var.database_admin_principals : p => p
+  }
+  database_read_principals = {
+    for p in var.database_read_principals : p => p
+  }
+}
 
 # ---------------------------------------------------------------------
 # ALL Lake Formation Permissions for S3 Inventory Database and Tables
 # ---------------------------------------------------------------------
 resource "aws_lakeformation_permissions" "inventory_database_admin" {
-  count     = length(var.database_admin_principals)
-  principal = var.database_admin_principals[count.index]
+  for_each  = local.database_admin_principals
+  principal = each.value
 
   # List of Database Permissions
   # ["ALL", "ALTER", "CREATE_TABLE", "DESCRIBE", "DROP"]
@@ -32,8 +41,8 @@ resource "aws_lakeformation_permissions" "inventory_database_admin" {
 }
 
 resource "aws_lakeformation_permissions" "inventory_tables_admin" {
-  count     = length(var.database_admin_principals)
-  principal = var.database_admin_principals[count.index]
+  for_each  = local.database_admin_principals
+  principal = each.value
 
   # List of Table Permissions
   # ["ALL", "ALTER", "DELETE", "DESCRIBE", "DROP", "INSERT", "SELECT"]
@@ -69,8 +78,8 @@ resource "aws_lakeformation_permissions" "inventory_tables_admin" {
 # READ Lake Formation Permissions for S3 Inventory Database and Tables
 # ---------------------------------------------------------------------
 resource "aws_lakeformation_permissions" "inventory_database_read" {
-  count     = length(var.database_read_principals)
-  principal = var.database_read_principals[count.index]
+  for_each  = local.database_read_principals
+  principal = each.value
 
   # List of Database Permissions
   # ["ALL", "ALTER", "CREATE_TABLE", "DESCRIBE", "DROP"]
@@ -83,8 +92,8 @@ resource "aws_lakeformation_permissions" "inventory_database_read" {
 }
 
 resource "aws_lakeformation_permissions" "inventory_tables_read" {
-  count     = length(var.database_read_principals)
-  principal = var.database_read_principals[count.index]
+  for_each  = local.database_read_principals
+  principal = each.value
 
   # List of Table Permissions
   # ["ALL", "ALTER", "DELETE", "DESCRIBE", "DROP", "INSERT", "SELECT"]
