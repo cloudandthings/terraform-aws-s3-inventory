@@ -149,8 +149,10 @@ This project is currently unlicensed. Please contact the maintaining team to add
 | <a name="input_inventory_config_frequency"></a> [inventory\_config\_frequency](#input\_inventory\_config\_frequency) | Frequency of the S3 inventory report generation | `string` | `"Daily"` | no |
 | <a name="input_inventory_config_name"></a> [inventory\_config\_name](#input\_inventory\_config\_name) | Name identifier for the S3 inventory configuration | `string` | `"daily"` | no |
 | <a name="input_inventory_config_object_versions"></a> [inventory\_config\_object\_versions](#input\_inventory\_config\_object\_versions) | Which object versions to include in the inventory report | `string` | `"All"` | no |
+| <a name="input_inventory_database_description"></a> [inventory\_database\_description](#input\_inventory\_database\_description) | Description to set on the S3 inventory Glue database. If not provided, a default will be used. | `string` | `null` | no |
 | <a name="input_inventory_database_name"></a> [inventory\_database\_name](#input\_inventory\_database\_name) | Name of the S3 inventory Glue database | `string` | n/a | yes |
 | <a name="input_inventory_optional_fields"></a> [inventory\_optional\_fields](#input\_inventory\_optional\_fields) | List of optional fields to include in the S3 inventory report | `list(string)` | <pre>[<br/>  "Size",<br/>  "LastModifiedDate",<br/>  "IsMultipartUploaded",<br/>  "ReplicationStatus",<br/>  "EncryptionStatus",<br/>  "BucketKeyStatus",<br/>  "StorageClass",<br/>  "IntelligentTieringAccessTier",<br/>  "ETag",<br/>  "ChecksumAlgorithm",<br/>  "ObjectLockRetainUntilDate",<br/>  "ObjectLockMode",<br/>  "ObjectLockLegalHoldStatus",<br/>  "ObjectAccessControlList",<br/>  "ObjectOwner"<br/>]</pre> | no |
+| <a name="input_inventory_tables_description"></a> [inventory\_tables\_description](#input\_inventory\_tables\_description) | Description to set on every S3 inventory Glue table. If not provided, a default will be used. | `string` | `null` | no |
 | <a name="input_source_bucket_names"></a> [source\_bucket\_names](#input\_source\_bucket\_names) | List of S3 bucket names to create inventory reports for | `list(string)` | `[]` | no |
 | <a name="input_union_view_name"></a> [union\_view\_name](#input\_union\_view\_name) | Name for the Athena view over S3 inventory data from all the source buckets | `string` | `null` | no |
 
@@ -197,6 +199,7 @@ This project is currently unlicensed. Please contact the maintaining team to add
 | [aws_lakeformation_permissions.inventory_tables_read](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lakeformation_permissions) | resource |
 | [aws_s3_bucket_inventory.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_inventory) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_default_tags.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/default_tags) | data source |
 | [aws_iam_policy_document.inventory_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 

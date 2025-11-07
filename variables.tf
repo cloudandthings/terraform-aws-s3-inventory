@@ -29,6 +29,18 @@ variable "inventory_database_name" {
   }
 }
 
+variable "inventory_database_description" {
+  description = "Description to set on the S3 inventory Glue database. If not provided, a default will be used."
+  type        = string
+  default     = null
+}
+
+variable "inventory_tables_description" {
+  description = "Description to set on every S3 inventory Glue table. If not provided, a default will be used."
+  type        = string
+  default     = null
+}
+
 variable "source_bucket_names" {
   description = "List of S3 bucket names to create inventory reports for"
   type        = list(string)

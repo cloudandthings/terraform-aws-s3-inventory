@@ -27,8 +27,9 @@ locals {
 resource "aws_glue_catalog_table" "view" {
   count = var.union_view_name == null ? 0 : 1
 
-  name          = var.union_view_name
   database_name = local.inventory_database_name
+  name          = var.union_view_name
+  description   = coalesce(var.inventory_tables_description, local.description)
 
   table_type         = "VIRTUAL_VIEW"
   view_original_text = "/* Presto View: ${base64encode(local.presto_view)} */"
