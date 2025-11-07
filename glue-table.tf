@@ -1,6 +1,11 @@
+locals {
+  description = jsonencode(data.aws_default_tags.current.tags)
+}
+
 resource "aws_glue_catalog_database" "s3_inventory" {
-  count = var.create_inventory_database ? 1 : 0
-  name  = var.inventory_database_name
+  count       = var.create_inventory_database ? 1 : 0
+  name        = var.inventory_database_name
+  description = coalesce(var.inventory_database_description, local.description)
 }
 
 locals {
@@ -19,9 +24,11 @@ locals {
 resource "aws_glue_catalog_table" "s3_inventory" {
   for_each = local.source_bucket_names
 
-  name          = each.value
   database_name = local.inventory_database_name
-  table_type    = "EXTERNAL_TABLE"
+  name          = each.value
+  description   = coalesce(var.inventory_tables_description, local.description)
+
+  table_type = "EXTERNAL_TABLE"
 
   parameters = {
     # Lexicographical order to prevent TF plan drift
