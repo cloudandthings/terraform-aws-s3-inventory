@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.1.0...v1.2.0) (2025-12-08)
+
+
+### Features
+
+* Add MIT license and update README ([d096dc5](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/d096dc57ddc73d4fffd2ffc70aefcafa2dc3cf2b))
+
 ## [1.1.0](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.3...v1.1.0) (2025-11-07)
 
 
