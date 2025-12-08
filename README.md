@@ -116,7 +116,7 @@ See [`CONTRIBUTING.md`](https://github.com/cloudandthings/terraform-aws-s3-inven
 ----
 ## License
 
-This project is currently unlicensed. Please contact the maintaining team to add a license.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ----
 
