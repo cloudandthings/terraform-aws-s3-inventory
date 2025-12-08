@@ -6,6 +6,11 @@ resource "aws_glue_catalog_database" "s3_inventory" {
   count       = var.create_inventory_database ? 1 : 0
   name        = var.inventory_database_name
   description = coalesce(var.inventory_database_description, local.description)
+
+  depends_on = [
+    aws_lakeformation_permissions.inventory_database_admin,
+    aws_lakeformation_permissions.inventory_tables_admin
+  ]
 }
 
 locals {
@@ -24,7 +29,7 @@ locals {
 resource "aws_glue_catalog_table" "s3_inventory" {
   for_each = local.source_bucket_names
 
-  database_name = local.inventory_database_name
+  database_name = var.inventory_database_name
   name          = each.value
   description   = coalesce(var.inventory_tables_description, local.description)
 
@@ -73,4 +78,7 @@ resource "aws_glue_catalog_table" "s3_inventory" {
       parameters,
     ]
   }
+  depends_on = [
+    aws_glue_catalog_database.s3_inventory
+  ]
 }

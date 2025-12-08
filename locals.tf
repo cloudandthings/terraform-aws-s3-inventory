@@ -17,12 +17,6 @@ locals {
     : "arn:aws:s3:::${var.inventory_bucket_name}"
   )
 
-  inventory_database_name = (
-    var.create_inventory_database
-    ? aws_glue_catalog_database.s3_inventory[0].name
-    : var.inventory_database_name
-  )
-
   inventory_default_lifecycle_rules = [
     {
       id                                     = "delete_incomplete_multipart_uploads_and_expired_markers"
