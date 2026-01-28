@@ -9,7 +9,8 @@ resource "random_integer" "naming" {
 }
 
 locals {
-  random_name = "example-custom-policy-${random_integer.naming.id}"
+  random_name           = "example-custom-policy-${random_integer.naming.id}"
+  inventory_bucket_name = "${local.random_name}-inventory"
 }
 
 #--------------------------------------------------------------------------------------
@@ -61,7 +62,7 @@ module "inventory" {
   source = "../../"
 
   # ------- Required module parameters ---------
-  inventory_bucket_name   = "${local.random_name}-inventory"
+  inventory_bucket_name   = local.inventory_bucket_name
   inventory_database_name = "${local.random_name}-inventory"
 
   # ------ Optional module parameters ----------
@@ -82,6 +83,7 @@ module "inventory" {
   # Custom bucket policy statements
   # This example shows how to add additional policy statements to allow
   # a specific IAM role to read inventory data
+  # Note: We use the same bucket name variable that's passed to the module
   inventory_bucket_policy_statements = [
     {
       sid    = "AllowInventoryReaderRole"
@@ -91,8 +93,8 @@ module "inventory" {
         "s3:ListBucket"
       ]
       resources = [
-        "arn:aws:s3:::${local.random_name}-inventory",
-        "arn:aws:s3:::${local.random_name}-inventory/*"
+        "arn:aws:s3:::${local.inventory_bucket_name}",
+        "arn:aws:s3:::${local.inventory_bucket_name}/*"
       ]
       principals = [{
         type        = "AWS"
