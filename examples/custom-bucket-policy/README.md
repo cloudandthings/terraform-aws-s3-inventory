@@ -43,9 +43,10 @@ When using custom statements, the module will automatically include:
 
 ## Outputs
 
-This example includes outputs that show:
-- `default_policy_json`: The default bucket policy before merging
-- `complete_policy_json`: The final merged policy with custom statements included
+The example provides outputs that show:
+- `module_inventory`: Complete module outputs including the default and merged policy documents
+  - Access policy documents via `module_inventory.default_inventory_bucket_policy_json` and `module_inventory.inventory_bucket_policy_json`
+- `inventory_reader_role_arn`: ARN of the example IAM role
 
 ## Testing
 
@@ -55,8 +56,12 @@ terraform plan
 terraform apply
 ```
 
-After applying, you can verify the bucket policy:
+After applying, you can verify the bucket policy using the module output:
 
 ```bash
-aws s3api get-bucket-policy --bucket $(terraform output -raw inventory_bucket_name) | jq -r '.Policy | fromjson'
+# View the complete bucket policy
+terraform output -json module_inventory | jq -r '.inventory_bucket_policy_json | fromjson'
+
+# Or directly query AWS
+aws s3api get-bucket-policy --bucket <your-inventory-bucket-name> | jq -r '.Policy | fromjson'
 ```
