@@ -4,18 +4,19 @@ This example demonstrates how to add custom policy statements to the S3 inventor
 
 ## Features Demonstrated
 
-- Adding custom IAM policy statements to the inventory bucket
+- Adding custom IAM policy statements to the inventory bucket using JSON
 - Merging custom statements with default policy statements
 - Granting specific IAM roles access to inventory data
-- Viewing both the default and complete (merged) bucket policies via outputs
+- Using `aws_iam_policy_document` data source to generate policy JSON
 
 ## Usage
 
-The key feature shown in this example is the `inventory_bucket_policy_statements` variable:
+The key feature shown in this example is the `inventory_bucket_policy_statements` variable with JSON input:
 
 ```hcl
-inventory_bucket_policy_statements = [
-  {
+# Create a custom policy document
+data "aws_iam_policy_document" "custom_policy" {
+  statement {
     sid    = "AllowInventoryReaderRole"
     effect = "Allow"
     actions = [
@@ -23,15 +24,21 @@ inventory_bucket_policy_statements = [
       "s3:ListBucket"
     ]
     resources = [
-      "arn:aws:s3:::${local.random_name}-inventory",
-      "arn:aws:s3:::${local.random_name}-inventory/*"
+      "arn:aws:s3:::${local.inventory_bucket_name}",
+      "arn:aws:s3:::${local.inventory_bucket_name}/*"
     ]
-    principals = [{
+    principals {
       type        = "AWS"
       identifiers = [aws_iam_role.inventory_reader.arn]
-    }]
+    }
   }
-]
+}
+
+# Pass the JSON to the module
+module "s3_inventory" {
+  # ...
+  inventory_bucket_policy_statements = data.aws_iam_policy_document.custom_policy.json
+}
 ```
 
 ## Default Policy Statements

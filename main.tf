@@ -78,54 +78,12 @@ data "aws_iam_policy_document" "default_inventory_bucket_policy" {
   }
 }
 
-# User-provided custom policy statements
-data "aws_iam_policy_document" "custom_inventory_bucket_policy" {
-  count = length(var.inventory_bucket_policy_statements) > 0 ? 1 : 0
-
-  dynamic "statement" {
-    for_each = var.inventory_bucket_policy_statements
-    content {
-      sid           = lookup(statement.value, "sid", null)
-      effect        = lookup(statement.value, "effect", "Allow")
-      actions       = lookup(statement.value, "actions", [])
-      not_actions   = lookup(statement.value, "not_actions", null)
-      resources     = lookup(statement.value, "resources", [])
-      not_resources = lookup(statement.value, "not_resources", null)
-
-      dynamic "principals" {
-        for_each = lookup(statement.value, "principals", [])
-        content {
-          type        = principals.value.type
-          identifiers = principals.value.identifiers
-        }
-      }
-
-      dynamic "not_principals" {
-        for_each = lookup(statement.value, "not_principals", [])
-        content {
-          type        = not_principals.value.type
-          identifiers = not_principals.value.identifiers
-        }
-      }
-
-      dynamic "condition" {
-        for_each = lookup(statement.value, "conditions", [])
-        content {
-          test     = condition.value.test
-          variable = condition.value.variable
-          values   = condition.value.values
-        }
-      }
-    }
-  }
-}
-
 # Merged bucket policy (default + custom)
 data "aws_iam_policy_document" "inventory_bucket_policy" {
   # Include default policy statements if enabled
   source_policy_documents = concat(
     var.attach_default_inventory_bucket_policy ? [data.aws_iam_policy_document.default_inventory_bucket_policy.json] : [],
-    length(var.inventory_bucket_policy_statements) > 0 ? [data.aws_iam_policy_document.custom_inventory_bucket_policy[0].json] : []
+    var.inventory_bucket_policy_statements != null ? [var.inventory_bucket_policy_statements] : []
   )
 }
 
@@ -143,9 +101,9 @@ module "inventory_bucket" {
     enabled = true
   }
 
-  attach_policy = var.attach_default_inventory_bucket_policy || length(var.inventory_bucket_policy_statements) > 0
+  attach_policy = var.attach_default_inventory_bucket_policy || var.inventory_bucket_policy_statements != null
   policy = (
-    var.attach_default_inventory_bucket_policy || length(var.inventory_bucket_policy_statements) > 0
+    var.attach_default_inventory_bucket_policy || var.inventory_bucket_policy_statements != null
     ? data.aws_iam_policy_document.inventory_bucket_policy.json
     : null
   )
