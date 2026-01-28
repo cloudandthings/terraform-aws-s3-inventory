@@ -90,6 +90,11 @@ variable "inventory_bucket_policy_statements" {
   description = "Additional IAM policy statements in JSON format to attach to the S3 inventory bucket policy. These will be merged with the default policy statements if attach_default_inventory_bucket_policy is true. Create your own aws_iam_policy_document resource and pass its .json output here."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.inventory_bucket_policy_statements == null || can(jsondecode(var.inventory_bucket_policy_statements))
+    error_message = "The inventory_bucket_policy_statements must be valid JSON. Create an aws_iam_policy_document data source and pass its .json output."
+  }
 }
 
 variable "apply_default_inventory_lifecyle_rules" {
