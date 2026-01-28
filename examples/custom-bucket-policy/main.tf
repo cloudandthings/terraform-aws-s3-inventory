@@ -55,6 +55,26 @@ resource "aws_iam_role" "inventory_reader" {
 # Example - Custom Bucket Policy Statements
 #--------------------------------------------------------------------------------------
 
+# Create a custom policy document with additional statements
+data "aws_iam_policy_document" "custom_policy" {
+  statement {
+    sid    = "AllowInventoryReaderRole"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+    resources = [
+      "arn:aws:s3:::${local.inventory_bucket_name}",
+      "arn:aws:s3:::${local.inventory_bucket_name}/*"
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.inventory_reader.arn]
+    }
+  }
+}
+
 module "inventory" {
   # Uncomment and update as needed
   # source  = "<your_module_url>"
@@ -80,26 +100,7 @@ module "inventory" {
     }
   }
 
-  # Custom bucket policy statements
-  # This example shows how to add additional policy statements to allow
-  # a specific IAM role to read inventory data
-  # Note: We use the same bucket name variable that's passed to the module
-  inventory_bucket_policy_statements = [
-    {
-      sid    = "AllowInventoryReaderRole"
-      effect = "Allow"
-      actions = [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ]
-      resources = [
-        "arn:aws:s3:::${local.inventory_bucket_name}",
-        "arn:aws:s3:::${local.inventory_bucket_name}/*"
-      ]
-      principals = [{
-        type        = "AWS"
-        identifiers = [aws_iam_role.inventory_reader.arn]
-      }]
-    }
-  ]
+  # Custom bucket policy statements (as JSON from aws_iam_policy_document)
+  # This will be merged with the default policy statements
+  inventory_bucket_policy_statements = data.aws_iam_policy_document.custom_policy.json
 }
