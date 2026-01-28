@@ -9,6 +9,7 @@ A comprehensive Terraform module for managing AWS S3 inventory configurations, i
 - **Glue Catalog Integration**: Sets up Glue database and tables for querying inventory data
 - **Unified View**: Optional creation of a union view across all inventory tables for cross-bucket analysis
 - **Security & Compliance**: Configurable encryption, object locking, and IAM and LakeFormation permissions
+- **Customizable Bucket Policy**: Add custom policy statements while retaining default security controls
 - **Lifecycle Management**: Automated lifecycle rules for inventory report retention
 
 Many features are optional and can be enabled/disabled as required.
@@ -48,6 +49,89 @@ module "s3_inventory" {
 ## Usage
 
 See examples dropdown on Terraform Cloud, or [browse the GitHub repo](https://github.com/cloudandthings/terraform-aws-s3-inventory/tree/main/examples/).
+
+----
+
+## Customizing the Bucket Policy
+
+The module provides flexible options for customizing the S3 inventory bucket policy:
+
+### Default Policy
+
+By default (`attach_default_inventory_bucket_policy = true`), the module creates a bucket policy with:
+- S3 service permissions to write inventory reports
+- Protection against deletion/modification of non-current object versions
+- Enforcement of HTTPS/secure transport (deny insecure connections)
+
+### Adding Custom Policy Statements
+
+You can add your own policy statements while keeping the default protections:
+
+```hcl
+module "s3_inventory" {
+  source = "cloudandthings/terraform-aws-s3-inventory/aws"
+
+  inventory_bucket_name   = "my-inventory-bucket"
+  inventory_database_name = "s3_inventory_db"
+
+  # Add custom policy statements that will be merged with default statements
+  inventory_bucket_policy_statements = [
+    {
+      sid    = "AllowSpecificRoleAccess"
+      effect = "Allow"
+      actions = [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+      resources = [
+        "arn:aws:s3:::my-inventory-bucket",
+        "arn:aws:s3:::my-inventory-bucket/*"
+      ]
+      principals = [{
+        type        = "AWS"
+        identifiers = ["arn:aws:iam::123456789012:role/MyRole"]
+      }]
+    }
+  ]
+}
+```
+
+### Using Only Custom Policy Statements
+
+To use only your own policy without the defaults:
+
+```hcl
+module "s3_inventory" {
+  source = "cloudandthings/terraform-aws-s3-inventory/aws"
+
+  inventory_bucket_name   = "my-inventory-bucket"
+  inventory_database_name = "s3_inventory_db"
+
+  # Disable default policy
+  attach_default_inventory_bucket_policy = false
+
+  # Provide your complete custom policy
+  inventory_bucket_policy_statements = [
+    # Your custom statements here
+  ]
+}
+```
+
+### Accessing Policy Documents
+
+The module outputs both the default and complete policy documents:
+
+```hcl
+output "default_policy" {
+  value = module.s3_inventory.default_inventory_bucket_policy_json
+}
+
+output "complete_policy" {
+  value = module.s3_inventory.inventory_bucket_policy_json
+}
+```
+
+See the [custom-bucket-policy example](https://github.com/cloudandthings/terraform-aws-s3-inventory/tree/main/examples/custom-bucket-policy) for a complete working example.
 
 ----
 
