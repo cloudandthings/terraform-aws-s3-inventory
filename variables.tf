@@ -86,6 +86,12 @@ variable "attach_default_inventory_bucket_policy" {
   default     = true
 }
 
+variable "inventory_bucket_policy_statements" {
+  description = "List of additional IAM policy statements to attach to the S3 inventory bucket policy. These will be merged with the default policy statements if attach_default_inventory_bucket_policy is true."
+  type        = any
+  default     = []
+}
+
 variable "apply_default_inventory_lifecyle_rules" {
   description = "Whether to attach default lifecycle rules to the S3 inventory bucket"
   type        = bool
