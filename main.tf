@@ -3,7 +3,8 @@
 # S3 bucket for inventories of ECS backups
 # -------------------------------------------------
 
-data "aws_iam_policy_document" "inventory_bucket_policy" {
+# Default bucket policy statements
+data "aws_iam_policy_document" "default_inventory_bucket_policy" {
   # Allow S3 service to create inventory objects in the bucket
   # This is necessary for the S3 Inventory feature to work correctly.
   statement {
@@ -38,7 +39,6 @@ data "aws_iam_policy_document" "inventory_bucket_policy" {
   #
   # https://docs.aws.amazon.com/AmazonS3/latest/userguide/troubleshoot-lifecycle.html#troubleshoot-lifecycle-6
 
-  # TODO make optional
   # Prevent all changes to non-current objects
   statement {
     effect = "Deny"
@@ -54,6 +54,37 @@ data "aws_iam_policy_document" "inventory_bucket_policy" {
       identifiers = ["*"]
     }
   }
+
+  # S3 best practice: Deny insecure transport (enforce HTTPS)
+  statement {
+    sid    = "DenyInsecureTransport"
+    effect = "Deny"
+    actions = [
+      "s3:*"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.inventory_bucket_name}",
+      "arn:aws:s3:::${var.inventory_bucket_name}/*",
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+# Merged bucket policy (default + custom)
+data "aws_iam_policy_document" "inventory_bucket_policy" {
+  # Include default policy statements if enabled
+  source_policy_documents = concat(
+    var.attach_default_inventory_bucket_policy ? [data.aws_iam_policy_document.default_inventory_bucket_policy.json] : [],
+    var.inventory_bucket_policy_statements != null ? [var.inventory_bucket_policy_statements] : []
+  )
 }
 
 module "inventory_bucket" {
@@ -70,9 +101,9 @@ module "inventory_bucket" {
     enabled = true
   }
 
-  attach_policy = var.attach_default_inventory_bucket_policy
+  attach_policy = var.attach_default_inventory_bucket_policy || var.inventory_bucket_policy_statements != null
   policy = (
-    var.attach_default_inventory_bucket_policy
+    var.attach_default_inventory_bucket_policy || var.inventory_bucket_policy_statements != null
     ? data.aws_iam_policy_document.inventory_bucket_policy.json
     : null
   )
