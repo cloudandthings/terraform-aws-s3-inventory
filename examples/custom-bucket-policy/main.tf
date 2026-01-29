@@ -9,43 +9,26 @@ resource "random_integer" "naming" {
 }
 
 locals {
-  random_name = "example-basic-${random_integer.naming.id}"
+  random_name = "example-custom-policy-${random_integer.naming.id}"
 }
 
 #--------------------------------------------------------------------------------------
 # Supporting resources
 #--------------------------------------------------------------------------------------
-resource "aws_s3_bucket" "example_data_1" {
-  bucket = "${local.random_name}-data-1"
-}
-resource "aws_s3_bucket_public_access_block" "example_data_1" {
-  bucket                  = aws_s3_bucket.example_data_1.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-resource "aws_s3_bucket_server_side_encryption_configuration" "example_data_1" {
-  bucket = aws_s3_bucket.example_data_1.id
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
-    }
-  }
+resource "aws_s3_bucket" "example_data" {
+  bucket = "${local.random_name}-data"
 }
 
-resource "aws_s3_bucket" "example_data_2" {
-  bucket = "${local.random_name}-data-2"
-}
-resource "aws_s3_bucket_public_access_block" "example_data_2" {
-  bucket                  = aws_s3_bucket.example_data_2.id
+resource "aws_s3_bucket_public_access_block" "example_data" {
+  bucket                  = aws_s3_bucket.example_data.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
-resource "aws_s3_bucket_server_side_encryption_configuration" "example_data_2" {
-  bucket = aws_s3_bucket.example_data_2.id
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "example_data" {
+  bucket = aws_s3_bucket.example_data.id
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "aws:kms"
@@ -80,7 +63,7 @@ resource "aws_glue_catalog_database" "s3_inventory" {
 }
 
 #--------------------------------------------------------------------------------------
-# Example
+# Example - With custom bucket policy
 #--------------------------------------------------------------------------------------
 
 module "inventory" {
@@ -93,14 +76,67 @@ module "inventory" {
   inventory_bucket_name   = aws_s3_bucket.s3_inventory_bucket.bucket
   inventory_database_name = aws_glue_catalog_database.s3_inventory.name
 
+  # IMPORTANT: Disable the module's automatic bucket policy attachment
+  # We're applying a custom policy ourselves (which includes the required default policy)
+  # Only one bucket policy can exist per S3 bucket
+  attach_bucket_policy = false
+
   # ------ Optional module parameters ----------
-  # List of S3 buckets
   source_bucket_names = [
-    aws_s3_bucket.example_data_1.bucket,
-    aws_s3_bucket.example_data_2.bucket
+    aws_s3_bucket.example_data.bucket
+  ]
+}
+
+# Custom bucket policy that INCLUDES the required default policy
+# The default policy is REQUIRED for S3 to write inventory files to the bucket
+data "aws_iam_policy_document" "custom_inventory_bucket_policy" {
+  # IMPORTANT: Include the module's default policy
+  # This policy allows the S3 service to write inventory files
+  # Without it, S3 inventory will not work
+  source_policy_documents = [
+    module.inventory.required_bucket_policy
   ]
 
-  # The module will automatically attach the required bucket policy
-  # that allows the S3 service to write inventory files
-  # attach_bucket_policy = true  # This is the default
+  # Now add your additional custom policy statements
+  statement {
+    sid    = "DenyUnencryptedObjectUploads"
+    effect = "Deny"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    actions = [
+      "s3:PutObject"
+    ]
+    resources = [
+      "${aws_s3_bucket.s3_inventory_bucket.arn}/*"
+    ]
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:x-amz-server-side-encryption"
+      values   = ["aws:kms"]
+    }
+  }
+
+  # Prevent deletion of non-current object versions
+  statement {
+    sid    = "DenyDeleteNonCurrentVersions"
+    effect = "Deny"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    actions = [
+      "s3:DeleteObjectVersion"
+    ]
+    resources = [
+      "${aws_s3_bucket.s3_inventory_bucket.arn}/*"
+    ]
+  }
+}
+
+# Apply the combined bucket policy (default + custom statements)
+resource "aws_s3_bucket_policy" "custom_inventory_bucket_policy" {
+  bucket = aws_s3_bucket.s3_inventory_bucket.id
+  policy = data.aws_iam_policy_document.custom_inventory_bucket_policy.json
 }

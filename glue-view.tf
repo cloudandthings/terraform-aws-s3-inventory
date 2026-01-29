@@ -5,7 +5,7 @@ locals {
       for bucket in var.source_bucket_names :
       format(
         "SELECT * FROM \"%s\".\"%s\"",
-        local.inventory_database_name,
+        var.inventory_database_name,
         bucket
       )
     ]
@@ -16,7 +16,7 @@ locals {
   presto_view = jsonencode({
     originalSql = local.sql,
     catalog     = "awsdatacatalog",
-    schema      = local.inventory_database_name,
+    schema      = var.inventory_database_name,
     columns = [
       for column in local.inventory_columns_incl_partition :
       { name = column.name, type = column.presto_type }
@@ -27,7 +27,7 @@ locals {
 resource "aws_glue_catalog_table" "view" {
   count = var.union_view_name == null ? 0 : 1
 
-  database_name = local.inventory_database_name
+  database_name = var.inventory_database_name
   name          = var.union_view_name
   description   = coalesce(var.inventory_tables_description, local.description)
 
