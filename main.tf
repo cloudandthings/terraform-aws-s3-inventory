@@ -1,23 +1,20 @@
+# -------------------------------------
+# Inventory S3 bucket policy
+# -------------------------------------
 
-# -------------------------------------------------
-# S3 bucket for inventories of ECS backups
-# -------------------------------------------------
-
-data "aws_iam_policy_document" "inventory_bucket_policy" {
-  # Allow S3 service to create inventory objects in the bucket
-  # This is necessary for the S3 Inventory feature to work correctly.
+# Required policy statement that allows S3 to write inventory reports
+data "aws_iam_policy_document" "required" {
   statement {
+    sid    = "AllowS3InventoryToWriteReports"
     effect = "Allow"
-    actions = [
-      "s3:PutObject"
-    ]
-    resources = [
-      "arn:aws:s3:::${var.inventory_bucket_name}/*",
-    ]
     principals {
       type        = "Service"
       identifiers = ["s3.amazonaws.com"]
     }
+    actions = [
+      "s3:PutObject"
+    ]
+    resources = ["${local.inventory_bucket_arn}/*"]
     condition {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
@@ -29,78 +26,46 @@ data "aws_iam_policy_document" "inventory_bucket_policy" {
       values   = ["bucket-owner-full-control"]
     }
   }
-
-  # Prevent objects in the bucket from being deleted or overwritten
-  # Deny statements in a bucket policy don't prevent the expiration of the objects
-  # defined in a lifecycle rule. Lifecycle actions (such as transitions or expirations)
-  # don't use the S3 DeleteObject operation. Instead, S3 Lifecycle actions are performed
-  # by using internal S3 endpoints.
-  #
-  # https://docs.aws.amazon.com/AmazonS3/latest/userguide/troubleshoot-lifecycle.html#troubleshoot-lifecycle-6
-
-  # TODO make optional
-  # Prevent all changes to non-current objects
-  statement {
-    effect = "Deny"
-    actions = [
-      "s3:DeleteObjectVersion*",
-      "s3:PutObjectVersion*",
-    ]
-    resources = [
-      "arn:aws:s3:::${var.inventory_bucket_name}/*",
-    ]
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-  }
 }
 
-module "inventory_bucket" {
-  count = var.create_inventory_bucket ? 1 : 0
+# Additional user-provided policy statements converted from object format
+# aws_iam_policy_document properly handles optional fields and avoids null values in JSON output
+data "aws_iam_policy_document" "additional" {
+  count = length(var.additional_bucket_policy_statements) > 0 ? 1 : 0
 
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "4.6.0"
+  # Convert each statement from object format to aws_iam_policy_document format
+  source_policy_documents = [
+    jsonencode({
+      Version = "2012-10-17"
+      # Filter out null values from each statement before encoding
+      Statement = [
+        for stmt in var.additional_bucket_policy_statements : {
+          for k, v in stmt : k => v if v != null
+        }
+      ]
+    })
+  ]
+}
 
+# Combine required and additional policies
+data "aws_iam_policy_document" "combined" {
+  source_policy_documents = concat(
+    [data.aws_iam_policy_document.required.json],
+    length(var.additional_bucket_policy_statements) > 0 ? [data.aws_iam_policy_document.additional[0].json] : []
+  )
+}
+
+locals {
+  # JSON policy document with ONLY the required statements
+  # Useful for merging with custom policies via source_policy_documents
+  required_policy_document = data.aws_iam_policy_document.required.json
+
+  # Complete policy document with all statements (required + additional)
+  policy_document = data.aws_iam_policy_document.combined.json
+}
+
+resource "aws_s3_bucket_policy" "this" {
+  count  = var.attach_bucket_policy ? 1 : 0
   bucket = var.inventory_bucket_name
-
-  server_side_encryption_configuration = var.inventory_bucket_encryption_config
-
-  versioning = {
-    enabled = true
-  }
-
-  attach_policy = var.attach_default_inventory_bucket_policy
-  policy = (
-    var.attach_default_inventory_bucket_policy
-    ? data.aws_iam_policy_document.inventory_bucket_policy.json
-    : null
-  )
-
-  # Note: Object Lock configuration can be enabled only on new buckets
-  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_object_lock_configuration
-  object_lock_enabled = var.inventory_bucket_object_lock_retention_days != null # Forces new resource
-
-  # TODO make dynamic
-  object_lock_configuration = {
-    rule = {
-      default_retention = {
-        # https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html#object-lock-retention-modes
-
-        # Consider using Governance mode if you want to protect objects from being deleted
-        # by most users during a pre-defined retention period, but at the same time want
-        # some users with special permissions to have the flexibility to alter the
-        # retention settings or delete the objects.
-        mode = var.inventory_bucket_object_lock_mode
-
-        days = var.inventory_bucket_object_lock_retention_days
-      }
-    }
-  }
-
-  lifecycle_rule = (
-    var.apply_default_inventory_lifecyle_rules
-    ? local.inventory_default_lifecycle_rules
-    : var.inventory_bucket_lifecycle_rules
-  )
+  policy = local.policy_document
 }

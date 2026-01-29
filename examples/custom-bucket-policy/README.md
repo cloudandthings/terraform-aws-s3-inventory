@@ -1,0 +1,238 @@
+# Overview
+
+This example demonstrates how to use a **custom S3 bucket policy** when you need additional security controls beyond what the module provides by default.
+
+## Understanding the Bucket Policy Requirement
+
+**The S3 inventory bucket requires a specific bucket policy to allow the AWS S3 service to write inventory files.** This policy is mandatory for S3 inventory to function.
+
+Since **only one bucket policy can exist per S3 bucket**, if you need custom policy statements, you must:
+
+1. Get the required default policy from the module's `required_bucket_policy` output
+2. Merge it with your custom statements using `source_policy_documents`
+3. Set `attach_bucket_policy = false` to prevent the module from attaching its own policy
+4. Apply the combined policy yourself
+
+## Key Features
+
+- Creates the inventory S3 bucket and Glue database externally
+- Uses `source_policy_documents` to **merge** the module's required default policy with custom statements
+- Sets `attach_bucket_policy = false` to prevent policy conflicts
+- Adds custom policy statements for additional security:
+  - Denying unencrypted object uploads
+  - Preventing deletion of non-current object versions
+
+## Usage
+
+Use this pattern when you need additional security controls or restrictions beyond the default policy, while still maintaining the required permissions for S3 inventory to function.
+
+# Generated terraform-docs
+<!-- BEGIN_TF_DOCS -->
+----
+## main.tf
+```hcl
+#--------------------------------------------------------------------------------------
+# Naming
+#--------------------------------------------------------------------------------------
+
+# Generate unique naming for resources
+resource "random_integer" "naming" {
+  min = 100000
+  max = 999999
+}
+
+locals {
+  random_name = "example-custom-policy-${random_integer.naming.id}"
+}
+
+#--------------------------------------------------------------------------------------
+# Supporting resources
+#--------------------------------------------------------------------------------------
+resource "aws_s3_bucket" "example_data" {
+  bucket = "${local.random_name}-data"
+}
+
+resource "aws_s3_bucket_public_access_block" "example_data" {
+  bucket                  = aws_s3_bucket.example_data.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "example_data" {
+  bucket = aws_s3_bucket.example_data.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+    }
+  }
+}
+
+#--------------------------------------------------------------------------------------
+# Inventory bucket and Glue database
+#--------------------------------------------------------------------------------------
+resource "aws_s3_bucket" "s3_inventory_bucket" {
+  bucket = "${local.random_name}-s3-inventory"
+}
+resource "aws_s3_bucket_public_access_block" "s3_inventory_bucket" {
+  bucket                  = aws_s3_bucket.s3_inventory_bucket.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+resource "aws_s3_bucket_server_side_encryption_configuration" "s3_inventory_bucket" {
+  bucket = aws_s3_bucket.s3_inventory_bucket.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+    }
+  }
+}
+
+resource "aws_glue_catalog_database" "s3_inventory" {
+  name = "${local.random_name}-s3-inventory"
+}
+
+#--------------------------------------------------------------------------------------
+# Example - With custom bucket policy
+#--------------------------------------------------------------------------------------
+
+module "inventory" {
+  # Uncomment and update as needed
+  # source  = "<your_module_url>"
+  # version = "~> 2.0"
+  source = "../../"
+
+  # ------- Required module parameters ---------
+  inventory_bucket_name   = aws_s3_bucket.s3_inventory_bucket.bucket
+  inventory_database_name = aws_glue_catalog_database.s3_inventory.name
+
+  # IMPORTANT: Disable the module's automatic bucket policy attachment
+  # We're applying a custom policy ourselves (which includes the required default policy)
+  # Only one bucket policy can exist per S3 bucket
+  attach_bucket_policy = false
+
+  # ------ Optional module parameters ----------
+  source_bucket_names = [
+    aws_s3_bucket.example_data.bucket
+  ]
+}
+
+# Custom bucket policy that INCLUDES the required default policy
+# The default policy is REQUIRED for S3 to write inventory files to the bucket
+data "aws_iam_policy_document" "custom_inventory_bucket_policy" {
+  # IMPORTANT: Include the module's default policy
+  # This policy allows the S3 service to write inventory files
+  # Without it, S3 inventory will not work
+  source_policy_documents = [
+    module.inventory.required_bucket_policy
+  ]
+
+  # Now add your additional custom policy statements
+  statement {
+    sid    = "DenyUnencryptedObjectUploads"
+    effect = "Deny"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    actions = [
+      "s3:PutObject"
+    ]
+    resources = [
+      "${aws_s3_bucket.s3_inventory_bucket.arn}/*"
+    ]
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:x-amz-server-side-encryption"
+      values   = ["aws:kms"]
+    }
+  }
+
+  # Prevent deletion of non-current object versions
+  statement {
+    sid    = "DenyDeleteNonCurrentVersions"
+    effect = "Deny"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    actions = [
+      "s3:DeleteObjectVersion"
+    ]
+    resources = [
+      "${aws_s3_bucket.s3_inventory_bucket.arn}/*"
+    ]
+  }
+}
+
+# Apply the combined bucket policy (default + custom statements)
+resource "aws_s3_bucket_policy" "custom_inventory_bucket_policy" {
+  bucket = aws_s3_bucket.s3_inventory_bucket.id
+  policy = data.aws_iam_policy_document.custom_inventory_bucket_policy.json
+}
+```
+----
+
+## Documentation
+
+----
+### Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile | `string` | `null` | no |
+| <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region | `string` | `null` | no |
+
+----
+### Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_inventory"></a> [inventory](#module\_inventory) | ../../ | n/a |
+
+----
+### Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_custom_bucket_policy"></a> [custom\_bucket\_policy](#output\_custom\_bucket\_policy) | The custom bucket policy combining default and additional statements |
+| <a name="output_module_example"></a> [module\_example](#output\_module\_example) | module.inventory |
+
+----
+### Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~> 3.4 |
+
+----
+### Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.4 |
+
+----
+### Resources
+
+| Name | Type |
+|------|------|
+| [aws_glue_catalog_database.s3_inventory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_database) | resource |
+| [aws_s3_bucket.example_data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket.s3_inventory_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_policy.custom_inventory_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_bucket_public_access_block.example_data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_public_access_block.s3_inventory_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_server_side_encryption_configuration.example_data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
+| [aws_s3_bucket_server_side_encryption_configuration.s3_inventory_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
+| [random_integer.naming](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) | resource |
+| [aws_iam_policy_document.custom_inventory_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+
+----
+<!-- END_TF_DOCS -->

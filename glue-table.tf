@@ -1,14 +1,4 @@
 locals {
-  description = jsonencode(data.aws_default_tags.current.tags)
-}
-
-resource "aws_glue_catalog_database" "s3_inventory" {
-  count       = var.create_inventory_database ? 1 : 0
-  name        = var.inventory_database_name
-  description = coalesce(var.inventory_database_description, local.description)
-}
-
-locals {
   # See README for more information.
   # This calculation causes Terraform to drift annually.
   last_year                          = tonumber(formatdate("YYYY", timestamp())) - 1
@@ -19,12 +9,14 @@ locals {
     ? var.athena_projection_dt_range
     : local.default_athena_projection_dt_range
   )
+
+  description = jsonencode(data.aws_default_tags.current.tags)
 }
 
 resource "aws_glue_catalog_table" "s3_inventory" {
   for_each = local.source_bucket_names
 
-  database_name = local.inventory_database_name
+  database_name = var.inventory_database_name
   name          = each.value
   description   = coalesce(var.inventory_tables_description, local.description)
 
@@ -46,7 +38,7 @@ resource "aws_glue_catalog_table" "s3_inventory" {
   }
 
   storage_descriptor {
-    location      = "s3://${local.inventory_bucket_name}/${each.value}/${var.inventory_config_name}/hive/"
+    location      = "s3://${var.inventory_bucket_name}/${each.value}/${var.inventory_config_name}/hive/"
     input_format  = "org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 

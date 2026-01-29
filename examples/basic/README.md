@@ -1,3 +1,15 @@
+# Overview
+
+This is the basic example showing the simplest usage of the module.
+
+## Key Features
+
+- Creates the inventory S3 bucket and Glue database externally
+- Uses the **default bucket policy** (automatically attached by the module)
+- The bucket policy allows the S3 service to write inventory files - this is required for S3 inventory to work
+- Configures inventory for two example data buckets
+
+# Generated terraform-docs
 <!-- BEGIN_TF_DOCS -->
 ----
 ## main.tf
@@ -58,18 +70,44 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "example_data_2" {
 }
 
 #--------------------------------------------------------------------------------------
+# Inventory bucket and Glue database
+#--------------------------------------------------------------------------------------
+resource "aws_s3_bucket" "s3_inventory_bucket" {
+  bucket = "${local.random_name}-s3-inventory"
+}
+resource "aws_s3_bucket_public_access_block" "s3_inventory_bucket" {
+  bucket                  = aws_s3_bucket.s3_inventory_bucket.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+resource "aws_s3_bucket_server_side_encryption_configuration" "s3_inventory_bucket" {
+  bucket = aws_s3_bucket.s3_inventory_bucket.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+    }
+  }
+}
+
+resource "aws_glue_catalog_database" "s3_inventory" {
+  name = "${local.random_name}-s3-inventory"
+}
+
+#--------------------------------------------------------------------------------------
 # Example
 #--------------------------------------------------------------------------------------
 
 module "inventory" {
   # Uncomment and update as needed
   # source  = "<your_module_url>"
-  # version = "~> 1.0"
+  # version = "~> 2.0"
   source = "../../"
 
   # ------- Required module parameters ---------
-  inventory_bucket_name   = "${local.random_name}-inventory"
-  inventory_database_name = "${local.random_name}-inventory"
+  inventory_bucket_name   = aws_s3_bucket.s3_inventory_bucket.bucket
+  inventory_database_name = aws_glue_catalog_database.s3_inventory.name
 
   # ------ Optional module parameters ----------
   # List of S3 buckets
@@ -78,14 +116,9 @@ module "inventory" {
     aws_s3_bucket.example_data_2.bucket
   ]
 
-  # Inventory bucket settings
-  inventory_bucket_encryption_config = {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "aws:kms"
-      }
-    }
-  }
+  # The module will automatically attach the required bucket policy
+  # that allows the S3 service to write inventory files
+  # attach_bucket_policy = true  # This is the default
 }
 ```
 ----
@@ -112,14 +145,14 @@ module "inventory" {
 
 | Name | Description |
 |------|-------------|
-| <a name="output_module_inventory"></a> [module\_inventory](#output\_module\_inventory) | module.inventory |
+| <a name="output_module_example"></a> [module\_example](#output\_module\_example) | module.inventory |
 
 ----
 ### Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5, < 7 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~> 3.4 |
 
 ----
@@ -127,8 +160,8 @@ module "inventory" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5, < 7 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.4 |
 
 ----
@@ -136,12 +169,16 @@ module "inventory" {
 
 | Name | Type |
 |------|------|
+| [aws_glue_catalog_database.s3_inventory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_database) | resource |
 | [aws_s3_bucket.example_data_1](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket.example_data_2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket.s3_inventory_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.example_data_1](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_public_access_block.example_data_2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_public_access_block.s3_inventory_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.example_data_1](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.example_data_2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
+| [aws_s3_bucket_server_side_encryption_configuration.s3_inventory_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
 | [random_integer.naming](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) | resource |
 
 ----

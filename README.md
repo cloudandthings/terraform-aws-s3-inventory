@@ -2,29 +2,82 @@
 
 A comprehensive Terraform module for managing AWS S3 inventory configurations, including automated inventory reports, Glue catalog integration, and Athena querying capabilities.
 
+## ⚠️ Breaking Changes in v2.0.0
+
+**This module no longer creates the S3 inventory bucket or Glue database.** These resources must now be created externally and passed to the module.
+
+### Migration from v1.x to v2.0.0
+
+If you were using the default behavior (`create_inventory_bucket = true` and `create_inventory_database = true`), you must now:
+
+1. **Create the S3 bucket externally** before calling this module
+2. **Create the Glue database externally** before calling this module
+3. **Remove the following variables** from your module configuration (they no longer exist):
+   - `create_inventory_bucket`
+   - `create_inventory_database`
+   - `apply_default_inventory_lifecyle_rules`
+   - `inventory_bucket_lifecycle_rules`
+   - `inventory_bucket_object_lock_retention_days`
+   - `inventory_bucket_object_lock_mode`
+   - `inventory_bucket_encryption_config`
+
+See the [examples](https://github.com/cloudandthings/terraform-aws-s3-inventory/tree/main/examples/) for updated usage patterns.
+
 ## Features
 
-- **S3 Inventory Destination Bucket**: Creates a dedicated S3 bucket for storing all inventory reports
 - **S3 Inventory Management**: Creates and configures S3 inventory reports for multiple source buckets
-- **Glue Catalog Integration**: Sets up Glue database and tables for querying inventory data
+- **Glue Catalog Integration**: Sets up Glue tables for querying inventory data (database must be provided)
 - **Unified View**: Optional creation of a union view across all inventory tables for cross-bucket analysis
-- **Security & Compliance**: Configurable encryption, object locking, and IAM and LakeFormation permissions
-- **Lifecycle Management**: Automated lifecycle rules for inventory report retention
+- **Security & Compliance**: Optional default bucket policy and configurable LakeFormation permissions
+- **Flexible Architecture**: Bring your own S3 bucket and Glue database with custom configurations
 
 Many features are optional and can be enabled/disabled as required.
+
+----
+
+## S3 Bucket Policy Requirement
+
+**Important:** The inventory bucket requires a specific bucket policy to allow the AWS S3 service to write inventory files. This policy is **required** for S3 inventory to function.
+
+The module provides two approaches:
+
+1. **Default (Recommended):** The module automatically generates and attaches the required bucket policy
+   - Set `attach_bucket_policy = true` (this is the default)
+   - The module handles everything for you
+
+2. **Custom Policy:** If you need additional policy statements beyond the default
+   - You could provide them using `additional_bucket_policy_statements`, and the module will include them, or:
+
+   - Set `attach_bucket_policy = false`
+   - Use the `required_bucket_policy` output to get the required policy
+   - Merge it with your custom statements using `source_policy_documents`
+   - Apply the combined policy yourself
+
+**Note:** Only one bucket policy can exist per S3 bucket. For S3 inventory to be able to write to the destination bucket, the bucket policy must include the module's required policy statements.
 
 ----
 
 ## Quick Start
 
 ```hcl
+# First, create the S3 bucket for inventory storage
+resource "aws_s3_bucket" "inventory" {
+  bucket = "my-company-s3-inventory"
+}
+
+# Create the Glue database for inventory tables
+resource "aws_glue_catalog_database" "inventory" {
+  name = "s3_inventory_db"
+}
+
+# Now configure the S3 inventory module
 module "s3_inventory" {
   source  = "cloudandthings/terraform-aws-s3-inventory/aws"
-  version = "~> 1.0"
+  version = "~> 2.0"
 
-  # Required variables
-  inventory_bucket_name   = "my-company-s3-inventory"
-  inventory_database_name = "s3_inventory_db"
+  # Required: Reference the externally created resources
+  inventory_bucket_name   = aws_s3_bucket.inventory.bucket
+  inventory_database_name = aws_glue_catalog_database.inventory.name
 
   # Source buckets to inventory
   source_bucket_names = [
@@ -40,6 +93,8 @@ module "s3_inventory" {
   # database_admin_principals = [...]
   # database_read_principals = [...]
 
+  # By default, the module will attach the required bucket policy automatically
+  # attach_bucket_policy = true  # This is the default
 }
 ```
 
@@ -132,24 +187,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_apply_default_inventory_lifecyle_rules"></a> [apply\_default\_inventory\_lifecyle\_rules](#input\_apply\_default\_inventory\_lifecyle\_rules) | Whether to attach default lifecycle rules to the S3 inventory bucket | `bool` | `true` | no |
+| <a name="input_additional_bucket_policy_statements"></a> [additional\_bucket\_policy\_statements](#input\_additional\_bucket\_policy\_statements) | Additional IAM policy statements to include in the bucket policy (will be merged with module's statements) | <pre>list(object({<br/>    Sid       = optional(string)<br/>    Effect    = string<br/>    Principal = any<br/>    Action    = any<br/>    Resource  = any<br/>    Condition = optional(any)<br/>  }))</pre> | `[]` | no |
 | <a name="input_athena_projection_dt_range"></a> [athena\_projection\_dt\_range](#input\_athena\_projection\_dt\_range) | Date range for Athena partition projection (format: START\_DATE,END\_DATE). If null then a value will be generated, see README for more information. | `string` | `null` | no |
-| <a name="input_attach_default_inventory_bucket_policy"></a> [attach\_default\_inventory\_bucket\_policy](#input\_attach\_default\_inventory\_bucket\_policy) | Whether to attach a default bucket policy to the S3 inventory bucket | `bool` | `true` | no |
-| <a name="input_create_inventory_bucket"></a> [create\_inventory\_bucket](#input\_create\_inventory\_bucket) | Whether to create the S3 inventory bucket | `bool` | `true` | no |
-| <a name="input_create_inventory_database"></a> [create\_inventory\_database](#input\_create\_inventory\_database) | Whether to create the Glue database for S3 inventory | `bool` | `true` | no |
+| <a name="input_attach_bucket_policy"></a> [attach\_bucket\_policy](#input\_attach\_bucket\_policy) | Whether module should attach the policy to the inventory bucket.<br/>Set to false if:<br/>- You want to attach the policy yourself using the s3\_bucket\_policy\_json or s3\_bucket\_required\_policy\_json outputs<br/>- The bucket already has a policy and you want to merge them yourself<br/>- You only want to use this module to generate the policy statements | `bool` | `true` | no |
 | <a name="input_database_admin_principals"></a> [database\_admin\_principals](#input\_database\_admin\_principals) | List of principal ARNs that will be allowed to manage (create, update, delete) the Glue database and its tables | `list(string)` | `[]` | no |
 | <a name="input_database_read_principals"></a> [database\_read\_principals](#input\_database\_read\_principals) | List of principal ARNs that will be allowed to read from the Glue database (query tables, describe metadata) | `list(string)` | `[]` | no |
 | <a name="input_enable_bucket_inventory_configs"></a> [enable\_bucket\_inventory\_configs](#input\_enable\_bucket\_inventory\_configs) | Whether to create S3 inventory configurations for the specified buckets | `bool` | `true` | no |
-| <a name="input_inventory_bucket_encryption_config"></a> [inventory\_bucket\_encryption\_config](#input\_inventory\_bucket\_encryption\_config) | Map containing server-side encryption configuration for the S3 inventory bucket. | `any` | `{}` | no |
-| <a name="input_inventory_bucket_lifecycle_rules"></a> [inventory\_bucket\_lifecycle\_rules](#input\_inventory\_bucket\_lifecycle\_rules) | List of lifecycle rules to apply to the S3 inventory bucket | `any` | `[]` | no |
 | <a name="input_inventory_bucket_name"></a> [inventory\_bucket\_name](#input\_inventory\_bucket\_name) | Name of the S3 inventory bucket | `string` | n/a | yes |
-| <a name="input_inventory_bucket_object_lock_mode"></a> [inventory\_bucket\_object\_lock\_mode](#input\_inventory\_bucket\_object\_lock\_mode) | Object Lock mode for the S3 inventory bucket (GOVERNANCE or COMPLIANCE) | `string` | `"GOVERNANCE"` | no |
-| <a name="input_inventory_bucket_object_lock_retention_days"></a> [inventory\_bucket\_object\_lock\_retention\_days](#input\_inventory\_bucket\_object\_lock\_retention\_days) | Number of days to retain objects with Object Lock (null to disable Object Lock) | `number` | `null` | no |
 | <a name="input_inventory_config_encryption"></a> [inventory\_config\_encryption](#input\_inventory\_config\_encryption) | Map containing encryption settings for the S3 inventory configuration. | `any` | `{}` | no |
 | <a name="input_inventory_config_frequency"></a> [inventory\_config\_frequency](#input\_inventory\_config\_frequency) | Frequency of the S3 inventory report generation | `string` | `"Daily"` | no |
 | <a name="input_inventory_config_name"></a> [inventory\_config\_name](#input\_inventory\_config\_name) | Name identifier for the S3 inventory configuration | `string` | `"daily"` | no |
 | <a name="input_inventory_config_object_versions"></a> [inventory\_config\_object\_versions](#input\_inventory\_config\_object\_versions) | Which object versions to include in the inventory report | `string` | `"All"` | no |
-| <a name="input_inventory_database_description"></a> [inventory\_database\_description](#input\_inventory\_database\_description) | Description to set on the S3 inventory Glue database. If not provided, a default will be used. | `string` | `null` | no |
 | <a name="input_inventory_database_name"></a> [inventory\_database\_name](#input\_inventory\_database\_name) | Name of the S3 inventory Glue database | `string` | n/a | yes |
 | <a name="input_inventory_optional_fields"></a> [inventory\_optional\_fields](#input\_inventory\_optional\_fields) | List of optional fields to include in the S3 inventory report | `list(string)` | <pre>[<br/>  "Size",<br/>  "LastModifiedDate",<br/>  "IsMultipartUploaded",<br/>  "ReplicationStatus",<br/>  "EncryptionStatus",<br/>  "BucketKeyStatus",<br/>  "StorageClass",<br/>  "IntelligentTieringAccessTier",<br/>  "ETag",<br/>  "ChecksumAlgorithm",<br/>  "ObjectLockRetainUntilDate",<br/>  "ObjectLockMode",<br/>  "ObjectLockLegalHoldStatus",<br/>  "ObjectAccessControlList",<br/>  "ObjectOwner"<br/>]</pre> | no |
 | <a name="input_inventory_tables_description"></a> [inventory\_tables\_description](#input\_inventory\_tables\_description) | Description to set on every S3 inventory Glue table. If not provided, a default will be used. | `string` | `null` | no |
@@ -159,9 +207,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ----
 ### Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_inventory_bucket"></a> [inventory\_bucket](#module\_inventory\_bucket) | terraform-aws-modules/s3-bucket/aws | 4.6.0 |
+No modules.
 
 ----
 ### Outputs
@@ -169,28 +215,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | Name | Description |
 |------|-------------|
 | <a name="output_athena_projection_dt_range"></a> [athena\_projection\_dt\_range](#output\_athena\_projection\_dt\_range) | The value used for projection.dt.range on the Glue table |
+| <a name="output_bucket_policy"></a> [bucket\_policy](#output\_bucket\_policy) | Complete bucket policy JSON including required statements and any additional statements. Use this to attach the policy yourself when attach\_bucket\_policy = false |
+| <a name="output_required_bucket_policy"></a> [required\_bucket\_policy](#output\_required\_bucket\_policy) | Required bucket policy JSON (S3 inventory write permissions only). Use with source\_policy\_documents to merge with your custom policy |
 
 ----
 ### Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5, < 7 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 
 ----
 ### Requirements
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5, < 7 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 
 ----
 ### Resources
 
 | Name | Type |
 |------|------|
-| [aws_glue_catalog_database.s3_inventory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_database) | resource |
 | [aws_glue_catalog_table.s3_inventory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
 | [aws_glue_catalog_table.view](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
 | [aws_lakeformation_permissions.inventory_database_admin](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lakeformation_permissions) | resource |
@@ -198,9 +245,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | [aws_lakeformation_permissions.inventory_tables_admin](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lakeformation_permissions) | resource |
 | [aws_lakeformation_permissions.inventory_tables_read](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lakeformation_permissions) | resource |
 | [aws_s3_bucket_inventory.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_inventory) | resource |
+| [aws_s3_bucket_policy.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_default_tags.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/default_tags) | data source |
-| [aws_iam_policy_document.inventory_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.additional](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.combined](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.required](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ----

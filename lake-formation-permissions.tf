@@ -36,7 +36,7 @@ resource "aws_lakeformation_permissions" "inventory_database_admin" {
 
   database {
     catalog_id = local.account_id
-    name       = local.inventory_database_name
+    name       = var.inventory_database_name
   }
 }
 
@@ -69,7 +69,7 @@ resource "aws_lakeformation_permissions" "inventory_tables_admin" {
 
   table {
     catalog_id    = local.account_id
-    database_name = local.inventory_database_name
+    database_name = var.inventory_database_name
     wildcard      = true
   }
 }
@@ -87,7 +87,7 @@ resource "aws_lakeformation_permissions" "inventory_database_read" {
 
   database {
     catalog_id = local.account_id
-    name       = local.inventory_database_name
+    name       = var.inventory_database_name
   }
 }
 
@@ -101,7 +101,7 @@ resource "aws_lakeformation_permissions" "inventory_tables_read" {
 
   table {
     catalog_id    = local.account_id
-    database_name = local.inventory_database_name
+    database_name = var.inventory_database_name
     wildcard      = true
   }
 }

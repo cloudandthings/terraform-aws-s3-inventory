@@ -29,12 +29,6 @@ variable "inventory_database_name" {
   }
 }
 
-variable "inventory_database_description" {
-  description = "Description to set on the S3 inventory Glue database. If not provided, a default will be used."
-  type        = string
-  default     = null
-}
-
 variable "inventory_tables_description" {
   description = "Description to set on every S3 inventory Glue table. If not provided, a default will be used."
   type        = string
@@ -61,35 +55,38 @@ variable "source_bucket_names" {
 #--------------------------------------------------------------------------------------
 # RESOURCE CREATION FLAGS
 #--------------------------------------------------------------------------------------
-
-variable "create_inventory_bucket" {
-  description = "Whether to create the S3 inventory bucket"
-  type        = bool
-  default     = true
-}
-
-variable "create_inventory_database" {
-  description = "Whether to create the Glue database for S3 inventory"
-  type        = bool
-  default     = true
-}
-
 variable "enable_bucket_inventory_configs" {
   description = "Whether to create S3 inventory configurations for the specified buckets"
   type        = bool
   default     = true
 }
 
-variable "attach_default_inventory_bucket_policy" {
-  description = "Whether to attach a default bucket policy to the S3 inventory bucket"
+#--------------------------------------------------------------------------------------
+# BUCKET POLICY CONFIGURATION
+#--------------------------------------------------------------------------------------
+variable "attach_bucket_policy" {
+  description = <<-EOT
+    Whether module should attach the policy to the inventory bucket.
+    Set to false if:
+    - You want to attach the policy yourself using the s3_bucket_policy_json or s3_bucket_required_policy_json outputs
+    - The bucket already has a policy and you want to merge them yourself
+    - You only want to use this module to generate the policy statements
+  EOT
   type        = bool
   default     = true
 }
 
-variable "apply_default_inventory_lifecyle_rules" {
-  description = "Whether to attach default lifecycle rules to the S3 inventory bucket"
-  type        = bool
-  default     = true
+variable "additional_bucket_policy_statements" {
+  description = "Additional IAM policy statements to include in the bucket policy (will be merged with module's statements)"
+  type = list(object({
+    Sid       = optional(string)
+    Effect    = string
+    Principal = any
+    Action    = any
+    Resource  = any
+    Condition = optional(any)
+  }))
+  default = []
 }
 
 #--------------------------------------------------------------------------------------
@@ -196,52 +193,6 @@ variable "union_view_name" {
     )
     error_message = "Union view name can only contain alphanumeric characters, periods, hyphens, and underscores."
   }
-}
-
-#--------------------------------------------------------------------------------------
-# S3 BUCKET LIFECYCLE AND RETENTION
-#--------------------------------------------------------------------------------------
-
-variable "inventory_bucket_lifecycle_rules" {
-  description = "List of lifecycle rules to apply to the S3 inventory bucket"
-  type        = any
-  default     = []
-}
-
-variable "inventory_bucket_object_lock_retention_days" {
-  description = "Number of days to retain objects with Object Lock (null to disable Object Lock)"
-  type        = number
-  default     = null
-
-  validation {
-    condition = var.inventory_bucket_object_lock_retention_days == null ? true : (
-      var.inventory_bucket_object_lock_retention_days >= 1
-      && var.inventory_bucket_object_lock_retention_days <= 36500
-    )
-    error_message = "Object Lock retention days must be between 1 and 36500 (100 years) or null to disable."
-  }
-}
-
-variable "inventory_bucket_object_lock_mode" {
-  description = "Object Lock mode for the S3 inventory bucket (GOVERNANCE or COMPLIANCE)"
-  type        = string
-  default     = "GOVERNANCE"
-
-
-  validation {
-    condition     = contains(["GOVERNANCE", "COMPLIANCE"], var.inventory_bucket_object_lock_mode)
-    error_message = "Object Lock mode must be either 'GOVERNANCE' or 'COMPLIANCE'."
-  }
-}
-
-#--------------------------------------------------------------------------------------
-# S3 BUCKET SECURITY AND ENCRYPTION
-#--------------------------------------------------------------------------------------
-
-variable "inventory_bucket_encryption_config" {
-  description = "Map containing server-side encryption configuration for the S3 inventory bucket."
-  type        = any
-  default     = {}
 }
 
 #--------------------------------------------------------------------------------------
