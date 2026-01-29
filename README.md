@@ -146,13 +146,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | <a name="input_inventory_bucket_name"></a> [inventory\_bucket\_name](#input\_inventory\_bucket\_name) | Name of the S3 inventory bucket | `string` | n/a | yes |
 | <a name="input_inventory_bucket_object_lock_mode"></a> [inventory\_bucket\_object\_lock\_mode](#input\_inventory\_bucket\_object\_lock\_mode) | Object Lock mode for the S3 inventory bucket (GOVERNANCE or COMPLIANCE) | `string` | `"GOVERNANCE"` | no |
 | <a name="input_inventory_bucket_object_lock_retention_days"></a> [inventory\_bucket\_object\_lock\_retention\_days](#input\_inventory\_bucket\_object\_lock\_retention\_days) | Number of days to retain objects with Object Lock (null to disable Object Lock) | `number` | `null` | no |
+| <a name="input_inventory_bucket_policy_statements"></a> [inventory\_bucket\_policy\_statements](#input\_inventory\_bucket\_policy\_statements) | Additional IAM policy statements in JSON format to attach to the S3 inventory bucket policy. These will be merged with the default policy statements if attach\_default\_inventory\_bucket\_policy is true. Create your own aws\_iam\_policy\_document resource and pass its .json output here. | `string` | `null` | no |
 | <a name="input_inventory_config_encryption"></a> [inventory\_config\_encryption](#input\_inventory\_config\_encryption) | Map containing encryption settings for the S3 inventory configuration. | `any` | `{}` | no |
 | <a name="input_inventory_config_frequency"></a> [inventory\_config\_frequency](#input\_inventory\_config\_frequency) | Frequency of the S3 inventory report generation | `string` | `"Daily"` | no |
 | <a name="input_inventory_config_name"></a> [inventory\_config\_name](#input\_inventory\_config\_name) | Name identifier for the S3 inventory configuration | `string` | `"daily"` | no |
 | <a name="input_inventory_config_object_versions"></a> [inventory\_config\_object\_versions](#input\_inventory\_config\_object\_versions) | Which object versions to include in the inventory report | `string` | `"All"` | no |
 | <a name="input_inventory_database_description"></a> [inventory\_database\_description](#input\_inventory\_database\_description) | Description to set on the S3 inventory Glue database. If not provided, a default will be used. | `string` | `null` | no |
 | <a name="input_inventory_database_name"></a> [inventory\_database\_name](#input\_inventory\_database\_name) | Name of the S3 inventory Glue database | `string` | n/a | yes |
-| <a name="input_inventory_optional_fields"></a> [inventory\_optional\_fields](#input\_inventory\_optional\_fields) | List of optional fields to include in the S3 inventory report | `list(string)` | <pre>[<br/>  "Size",<br/>  "LastModifiedDate",<br/>  "IsMultipartUploaded",<br/>  "ReplicationStatus",<br/>  "EncryptionStatus",<br/>  "BucketKeyStatus",<br/>  "StorageClass",<br/>  "IntelligentTieringAccessTier",<br/>  "ETag",<br/>  "ChecksumAlgorithm",<br/>  "ObjectLockRetainUntilDate",<br/>  "ObjectLockMode",<br/>  "ObjectLockLegalHoldStatus",<br/>  "ObjectAccessControlList",<br/>  "ObjectOwner"<br/>]</pre> | no |
+| <a name="input_inventory_optional_fields"></a> [inventory\_optional\_fields](#input\_inventory\_optional\_fields) | List of optional fields to include in the S3 inventory report | `list(string)` | <pre>[<br>  "Size",<br>  "LastModifiedDate",<br>  "IsMultipartUploaded",<br>  "ReplicationStatus",<br>  "EncryptionStatus",<br>  "BucketKeyStatus",<br>  "StorageClass",<br>  "IntelligentTieringAccessTier",<br>  "ETag",<br>  "ChecksumAlgorithm",<br>  "ObjectLockRetainUntilDate",<br>  "ObjectLockMode",<br>  "ObjectLockLegalHoldStatus",<br>  "ObjectAccessControlList",<br>  "ObjectOwner"<br>]</pre> | no |
 | <a name="input_inventory_tables_description"></a> [inventory\_tables\_description](#input\_inventory\_tables\_description) | Description to set on every S3 inventory Glue table. If not provided, a default will be used. | `string` | `null` | no |
 | <a name="input_source_bucket_names"></a> [source\_bucket\_names](#input\_source\_bucket\_names) | List of S3 bucket names to create inventory reports for | `list(string)` | `[]` | no |
 | <a name="input_union_view_name"></a> [union\_view\_name](#input\_union\_view\_name) | Name for the Athena view over S3 inventory data from all the source buckets | `string` | `null` | no |
@@ -170,6 +171,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | Name | Description |
 |------|-------------|
 | <a name="output_athena_projection_dt_range"></a> [athena\_projection\_dt\_range](#output\_athena\_projection\_dt\_range) | The value used for projection.dt.range on the Glue table |
+| <a name="output_default_inventory_bucket_policy_json"></a> [default\_inventory\_bucket\_policy\_json](#output\_default\_inventory\_bucket\_policy\_json) | The default bucket policy document in JSON format (without user-provided custom statements) |
+| <a name="output_inventory_bucket_policy_json"></a> [inventory\_bucket\_policy\_json](#output\_inventory\_bucket\_policy\_json) | The complete bucket policy document in JSON format (including both default and custom statements if provided) |
 
 ----
 ### Providers
@@ -201,6 +204,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | [aws_s3_bucket_inventory.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_inventory) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_default_tags.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/default_tags) | data source |
+| [aws_iam_policy_document.default_inventory_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.inventory_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
