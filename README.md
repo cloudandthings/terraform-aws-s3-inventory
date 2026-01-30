@@ -101,10 +101,10 @@ module "s3_inventory" {
   ]
 
   # Optional: Union all view - all inventory partitions (complete historical data)
-  union_all_view_name = "all_inventories"
+  union_all_view_name    = "${local.random_name}_union_all_view"
 
   # Optional: Union latest view - latest partition only (current state, more efficient)
-  union_latest_view_name = "latest_inventories"
+  union_latest_view_name = "${local.random_name}_union_latest_view"
 
   # Optional: Add LakeFormation permissions
   # database_admin_principals = [...]
@@ -149,13 +149,13 @@ SELECT bucket,
        COUNT(*) as object_count,
        SUM(size) as total_size,
        AVG(size) as avg_size
-FROM s3_inventory_db.latest_inventories
+FROM s3_inventory_db.union_latest_view
 GROUP BY bucket
 ORDER BY total_size DESC;
 
 -- Find largest objects across all buckets
 SELECT bucket, key, size, storage_class, last_modified_date
-FROM s3_inventory_db.latest_inventories
+FROM s3_inventory_db.union_latest_view
 ORDER BY size DESC
 LIMIT 100;
 ```
@@ -167,7 +167,7 @@ The union all view includes all inventory partitions from all buckets - use this
 ```sql
 -- Track storage growth over time
 SELECT dt, bucket, COUNT(*) as object_count, SUM(size) as total_size
-FROM s3_inventory_db.all_inventories
+FROM s3_inventory_db.union_all_view
 WHERE dt >= '2024-08-01-00-00'
 GROUP BY dt, bucket
 ORDER BY dt DESC, total_size DESC;
