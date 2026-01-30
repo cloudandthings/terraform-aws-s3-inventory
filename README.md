@@ -4,11 +4,14 @@ A comprehensive Terraform module for managing AWS S3 inventory configurations, i
 
 ## ⚠️ Breaking Changes in v2.0.0
 
-**This module no longer creates the S3 inventory bucket or Glue database.** These resources must now be created externally and passed to the module.
+**The variable `var.union_view_name` has been renamed to `var.union_all_view_name`**
 
-### Migration from v1.x to v2.0.0
+If you were using `var.union_view_name`, then use `var.union_all_view_name` instead.
 
-If you were using the default behavior (`create_inventory_bucket = true` and `create_inventory_database = true`), you must now:
+**This module no longer creates the S3 inventory bucket or Glue database**
+
+If you were using the default behavior (`create_inventory_bucket = true` and `create_inventory_database = true`),
+these resources are no longer created by the module. They must now be created externally and passed to the module. You must:
 
 1. **Create the S3 bucket externally** before calling this module
 2. **Create the Glue database externally** before calling this module
@@ -22,6 +25,16 @@ If you were using the default behavior (`create_inventory_bucket = true` and `cr
    - `inventory_bucket_encryption_config`
 
 See the [examples](https://github.com/cloudandthings/terraform-aws-s3-inventory/tree/main/examples/) for updated usage patterns.
+
+**This module no longer creates additional S3 resources**
+
+The following resources are no longer created by the module because it no longer creates the S3 bucket. These resources should be created externally (if required):
+
+- Bucket lifecycle rules
+- Bucket encryption
+- Bucket object lock configuration
+
+This change allows the user a lot more flexibility to manage the S3 bucket in their own environment.
 
 ## Features
 
@@ -162,8 +175,8 @@ ORDER BY dt DESC, total_size DESC;
 
 ### Performance Tips
 
-- **Use `union_latest_view` for current state queries** - scans only the most recent partition per bucket (faster and cheaper)
-- **Use `union_all_view` for trend analysis** - includes all historical partitions when you need time-series data
+- **Use the “latest inventories” view for current state queries** – the view configured via `var.union_latest_view_name`; this scans only the most recent partition per bucket (faster and cheaper)
+- **Use the “all inventories” view for trend analysis** – the view configured via `var.union_all_view_name`; this includes all historical partitions when you need time-series data
 - **Query individual bucket tables** when working with a single bucket and need partition filtering
 - **Always use column projection** - select only needed columns instead of `SELECT *`
 - **Apply partition filters** on individual tables: `WHERE dt >= 'YYYY-MM-DD-HH-MM'`
