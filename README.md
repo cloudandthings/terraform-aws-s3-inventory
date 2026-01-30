@@ -27,7 +27,8 @@ See the [examples](https://github.com/cloudandthings/terraform-aws-s3-inventory/
 
 - **S3 Inventory Management**: Creates and configures S3 inventory reports for multiple source buckets
 - **Glue Catalog Integration**: Sets up Glue tables for querying inventory data (database must be provided)
-- **Unified View**: Optional creation of a union view across all inventory tables for cross-bucket analysis
+- **Union All View**: Optional view that unions ALL inventory partitions from all buckets (complete historical data)
+- **Union Latest View**: Optional view that unions only the LATEST partition from each bucket (current state, more efficient)
 - **Security & Compliance**: Optional default bucket policy and configurable LakeFormation permissions
 - **Flexible Architecture**: Bring your own S3 bucket and Glue database with custom configurations
 
@@ -86,8 +87,11 @@ module "s3_inventory" {
     "my-backup-bucket"
   ]
 
-  # Optional: Create a union view for cross-bucket queries
-  union_view_name = "all_inventories_view"
+  # Optional: Union all view - all inventory partitions (complete historical data)
+  union_all_view_name = "all_inventories"
+
+  # Optional: Union latest view - latest partition only (current state, more efficient)
+  union_latest_view_name = "latest_inventories"
 
   # Optional: Add LakeFormation permissions
   # database_admin_principals = [...]
@@ -110,7 +114,9 @@ See examples dropdown on Terraform Cloud, or [browse the GitHub repo](https://gi
 
 Once deployed, you can query your S3 inventory data using Amazon Athena.
 
-Query a single bucket's inventory:
+### Querying Individual Buckets
+
+Each source bucket has its own Glue table with all historical partitions:
 
 ```sql
 SELECT bucket, key, size, last_modified_date, storage_class
@@ -120,14 +126,47 @@ ORDER BY size DESC
 LIMIT 100;
 ```
 
-Query across all buckets (using the union view):
+### Querying Current State (Union Latest View)
+
+**Recommended for most use cases** - the union latest view queries only the most recent partition from each bucket:
 
 ```sql
-SELECT bucket, COUNT(*) as object_count, SUM(size) as total_size, AVG(size) as avg_size FROM s3_inventory_db.all_inventories_view
-WHERE dt >= '2024-08-01-00-00'
+-- Get current object count and total size per bucket
+SELECT bucket,
+       COUNT(*) as object_count,
+       SUM(size) as total_size,
+       AVG(size) as avg_size
+FROM s3_inventory_db.latest_inventories
 GROUP BY bucket
 ORDER BY total_size DESC;
+
+-- Find largest objects across all buckets
+SELECT bucket, key, size, storage_class, last_modified_date
+FROM s3_inventory_db.latest_inventories
+ORDER BY size DESC
+LIMIT 100;
 ```
+
+### Querying Historical Data (Union All View)
+
+The union all view includes all inventory partitions from all buckets - use this for trend analysis:
+
+```sql
+-- Track storage growth over time
+SELECT dt, bucket, COUNT(*) as object_count, SUM(size) as total_size
+FROM s3_inventory_db.all_inventories
+WHERE dt >= '2024-08-01-00-00'
+GROUP BY dt, bucket
+ORDER BY dt DESC, total_size DESC;
+```
+
+### Performance Tips
+
+- **Use `union_latest_view` for current state queries** - scans only the most recent partition per bucket (faster and cheaper)
+- **Use `union_all_view` for trend analysis** - includes all historical partitions when you need time-series data
+- **Query individual bucket tables** when working with a single bucket and need partition filtering
+- **Always use column projection** - select only needed columns instead of `SELECT *`
+- **Apply partition filters** on individual tables: `WHERE dt >= 'YYYY-MM-DD-HH-MM'`
 
 ----
 
@@ -202,7 +241,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | <a name="input_inventory_optional_fields"></a> [inventory\_optional\_fields](#input\_inventory\_optional\_fields) | List of optional fields to include in the S3 inventory report | `list(string)` | <pre>[<br/>  "Size",<br/>  "LastModifiedDate",<br/>  "IsMultipartUploaded",<br/>  "ReplicationStatus",<br/>  "EncryptionStatus",<br/>  "BucketKeyStatus",<br/>  "StorageClass",<br/>  "IntelligentTieringAccessTier",<br/>  "ETag",<br/>  "ChecksumAlgorithm",<br/>  "ObjectLockRetainUntilDate",<br/>  "ObjectLockMode",<br/>  "ObjectLockLegalHoldStatus",<br/>  "ObjectAccessControlList",<br/>  "ObjectOwner"<br/>]</pre> | no |
 | <a name="input_inventory_tables_description"></a> [inventory\_tables\_description](#input\_inventory\_tables\_description) | Description to set on every S3 inventory Glue table. If not provided, a default will be used. | `string` | `null` | no |
 | <a name="input_source_bucket_names"></a> [source\_bucket\_names](#input\_source\_bucket\_names) | List of S3 bucket names to create inventory reports for | `list(string)` | `[]` | no |
-| <a name="input_union_view_name"></a> [union\_view\_name](#input\_union\_view\_name) | Name for the Athena view over S3 inventory data from all the source buckets | `string` | `null` | no |
+| <a name="input_union_all_view_name"></a> [union\_all\_view\_name](#input\_union\_all\_view\_name) | Name for the Athena view that unions ALL inventory partitions from all source buckets (complete historical data) | `string` | `null` | no |
+| <a name="input_union_latest_view_name"></a> [union\_latest\_view\_name](#input\_union\_latest\_view\_name) | Name for the Athena view that unions the LATEST inventory partition from each source bucket (current state only, more efficient) | `string` | `null` | no |
 
 ----
 ### Modules
@@ -217,6 +257,8 @@ No modules.
 | <a name="output_athena_projection_dt_range"></a> [athena\_projection\_dt\_range](#output\_athena\_projection\_dt\_range) | The value used for projection.dt.range on the Glue table |
 | <a name="output_bucket_policy"></a> [bucket\_policy](#output\_bucket\_policy) | Complete bucket policy JSON including required statements and any additional statements. Use this to attach the policy yourself when attach\_bucket\_policy = false |
 | <a name="output_required_bucket_policy"></a> [required\_bucket\_policy](#output\_required\_bucket\_policy) | Required bucket policy JSON (S3 inventory write permissions only). Use with source\_policy\_documents to merge with your custom policy |
+| <a name="output_union_all_view_name"></a> [union\_all\_view\_name](#output\_union\_all\_view\_name) | Name of the created union all view (all partitions from all buckets), if enabled |
+| <a name="output_union_latest_view_name"></a> [union\_latest\_view\_name](#output\_union\_latest\_view\_name) | Name of the created union latest view (latest partition from each bucket), if enabled |
 
 ----
 ### Providers
@@ -239,7 +281,8 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_glue_catalog_table.s3_inventory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
-| [aws_glue_catalog_table.view](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
+| [aws_glue_catalog_table.union_all_view](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
+| [aws_glue_catalog_table.union_latest_view](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
 | [aws_lakeformation_permissions.inventory_database_admin](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lakeformation_permissions) | resource |
 | [aws_lakeformation_permissions.inventory_database_read](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lakeformation_permissions) | resource |
 | [aws_lakeformation_permissions.inventory_tables_admin](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lakeformation_permissions) | resource |

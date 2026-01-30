@@ -182,16 +182,29 @@ variable "inventory_config_encryption" {
 # VIEWS
 #--------------------------------------------------------------------------------------
 
-variable "union_view_name" {
-  description = "Name for the Athena view over S3 inventory data from all the source buckets"
+variable "union_all_view_name" {
+  description = "Name for the Athena view that unions ALL inventory partitions from all source buckets (complete historical data)"
   type        = string
   default     = null
 
   validation {
-    condition = var.union_view_name == null ? true : (
-      can(regex("^[a-zA-Z0-9._-]+$", var.union_view_name))
+    condition = var.union_all_view_name == null ? true : (
+      can(regex("^[a-zA-Z0-9._-]+$", var.union_all_view_name))
     )
-    error_message = "Union view name can only contain alphanumeric characters, periods, hyphens, and underscores."
+    error_message = "Union all view name can only contain alphanumeric characters, periods, hyphens, and underscores."
+  }
+}
+
+variable "union_latest_view_name" {
+  description = "Name for the Athena view that unions the LATEST inventory partition from each source bucket (current state only, more efficient)"
+  type        = string
+  default     = null
+
+  validation {
+    condition = var.union_latest_view_name == null ? true : (
+      can(regex("^[a-zA-Z0-9._-]+$", var.union_latest_view_name))
+    )
+    error_message = "Union latest view name can only contain alphanumeric characters, periods, hyphens, and underscores."
   }
 }
 

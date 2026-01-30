@@ -116,6 +116,10 @@ module "inventory" {
     aws_s3_bucket.example_data_2.bucket
   ]
 
+  # Create views for querying inventory data
+  union_all_view_name    = "all_inventories"    # Union ALL partitions (complete historical data)
+  union_latest_view_name = "latest_inventories" # Union LATEST partition per bucket (current state, more efficient)
+
   # The module will automatically attach the required bucket policy
   # that allows the S3 service to write inventory files
   # attach_bucket_policy = true  # This is the default
