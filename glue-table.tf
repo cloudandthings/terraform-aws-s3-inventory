@@ -42,6 +42,13 @@ resource "aws_glue_catalog_table" "s3_inventory" {
     input_format  = "org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 
+    # Per AWS Support, these additional locations are required when using Lake Formation
+    # to control access to Glue tables which use org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat
+    # See: https://github.com/aws-samples/dbt-glue/issues/219
+    additional_locations = [
+      "s3://${var.inventory_bucket_name}/${each.value}/${var.inventory_config_name}/data/"
+    ]
+
     ser_de_info {
       name                  = "parquet"
       serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
