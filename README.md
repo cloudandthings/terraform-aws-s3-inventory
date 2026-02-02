@@ -160,6 +160,18 @@ ORDER BY size DESC
 LIMIT 100;
 ```
 
+#### How the Latest View Works
+
+The union latest view is designed for performance and queries **yesterday's data** rather than dynamically finding the maximum partition for each bucket. This means:
+
+- **Only yesterday's inventory data is included** - The view filters for partitions from yesterday (`date_add('day', -1, CURRENT_DATE)`)
+- **Stale inventories won't appear** - If a bucket's inventory hasn't run recently, it won't show up in the latest view
+- **For stale data, use the union all view** - To see historical or stale inventories, query the union all view which includes all partitions
+
+**Why this design?** Querying the maximum partition of a projected table in Amazon Athena is inefficient and can result in slow query performance and higher costs. By using yesterday's data, the view provides a fast, cost-effective way to get a recent snapshot of your S3 inventory across all buckets.
+
+If you need to access all inventory data regardless of age, use the union all view instead (see below).
+
 ### Querying Historical Data (Union All View)
 
 The union all view includes all inventory partitions from all buckets - use this for trend analysis:
