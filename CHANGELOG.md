@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.0.0](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.1.0...v2.0.0) (2026-02-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* BREAKING CHANGE: Rename var.union_view_name => var.union_all_view_name and add var.union_latest_view_name
+* BREAKING CHANGE: Module no longer creates S3 bucket or Glue database. These must be created externally and names supplied to the module.
+
+### Features
+
+* Add MIT license and update README ([d096dc5](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/d096dc57ddc73d4fffd2ffc70aefcafa2dc3cf2b))
+* BREAKING CHANGE: Module no longer creates S3 bucket or Glue database. These must be created externally and names supplied to the module. ([eb7eb88](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/eb7eb884825a2fb89c83d0a4c87a7ee18aeb38e0))
+* BREAKING CHANGE: Rename var.union_view_name =&gt; var.union_all_view_name and add var.union_latest_view_name ([201706b](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/201706b4e838664ed085cbafea0df929b7958a76))
+
+
+### Bug Fixes
+
+* Add additional locations for LakeFormation access control to Glue table ([11ce596](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/11ce596417e13cd39b1e86b1be7138cad67ddfc1))
+
 ## [1.1.0](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.0.3...v1.1.0) (2025-11-07)
 
 
