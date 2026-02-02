@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v2.0.0...v2.0.1) (2026-02-02)
+
+
+### Bug Fixes
+
+* Bugfix in union latest view ([5abe5da](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/5abe5da7121a10c87d6318dabe5e79d4ce8edb3f))
+
 ## [2.0.0](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v1.1.0...v2.0.0) (2026-02-02)
 
 
