@@ -10,9 +10,7 @@ locals {
     [
       for bucket in var.source_bucket_names :
       format(
-        "SELECT * FROM \"%s\".\"%s\" WHERE dt = (SELECT MAX(dt) FROM \"%s\".\"%s\")",
-        var.inventory_database_name,
-        bucket,
+        "SELECT * FROM \"%s\".\"%s\" WHERE dt >= DATE_FORMAT(date_add('day', -1, CURRENT_DATE), '%Y-%m-%d') AND dt < DATE_FORMAT(CURRENT_DATE, '%Y-%m-%d')",
         var.inventory_database_name,
         bucket
       )
