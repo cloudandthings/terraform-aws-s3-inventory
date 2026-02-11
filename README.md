@@ -216,6 +216,32 @@ Choose your start date based on either:
 - The date when your S3 inventories were first deployed
 
 
+### Lake Formation Permissions
+
+This module supports configuring AWS Lake Formation permissions for the Glue database and tables. Use the following variables to grant access:
+
+- `database_admin_principals` - Principals with full admin access (create, update, delete) to the database and tables
+- `database_read_principals` - Principals with read-only access (query tables, describe metadata)
+
+**Important validation rules:**
+- Each list must not contain duplicate values
+- A principal cannot appear in both lists - you must choose either admin or read access, not both
+
+```hcl
+module "s3_inventory" {
+  # ... other configuration ...
+
+  database_admin_principals = [
+    "arn:aws:iam::123456789012:role/data-engineering-admin",
+  ]
+
+  database_read_principals = [
+    "arn:aws:iam::123456789012:role/analytics-team",
+    "arn:aws:iam::123456789012:role/reporting-service",
+  ]
+}
+```
+
 ### Costs
 
 - S3 inventory reports are charged per million objects listed
@@ -254,8 +280,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | <a name="input_additional_bucket_policy_statements"></a> [additional\_bucket\_policy\_statements](#input\_additional\_bucket\_policy\_statements) | Additional IAM policy statements to include in the bucket policy (will be merged with module's statements) | <pre>list(object({<br/>    Sid       = optional(string)<br/>    Effect    = string<br/>    Principal = any<br/>    Action    = any<br/>    Resource  = any<br/>    Condition = optional(any)<br/>  }))</pre> | `[]` | no |
 | <a name="input_athena_projection_dt_range"></a> [athena\_projection\_dt\_range](#input\_athena\_projection\_dt\_range) | Date range for Athena partition projection (format: START\_DATE,END\_DATE). If null then a value will be generated, see README for more information. | `string` | `null` | no |
 | <a name="input_attach_bucket_policy"></a> [attach\_bucket\_policy](#input\_attach\_bucket\_policy) | Whether module should attach the policy to the inventory bucket.<br/>Set to false if:<br/>- You want to attach the policy yourself using the s3\_bucket\_policy\_json or s3\_bucket\_required\_policy\_json outputs<br/>- The bucket already has a policy and you want to merge them yourself<br/>- You only want to use this module to generate the policy statements | `bool` | `true` | no |
-| <a name="input_database_admin_principals"></a> [database\_admin\_principals](#input\_database\_admin\_principals) | List of principal ARNs that will be allowed to manage (create, update, delete) the Glue database and its tables | `list(string)` | `[]` | no |
-| <a name="input_database_read_principals"></a> [database\_read\_principals](#input\_database\_read\_principals) | List of principal ARNs that will be allowed to read from the Glue database (query tables, describe metadata) | `list(string)` | `[]` | no |
+| <a name="input_database_admin_principals"></a> [database\_admin\_principals](#input\_database\_admin\_principals) | List of principal ARNs that will be allowed to manage (create, update, delete) the Glue database and its tables. Must not contain duplicates or overlap with database\_read\_principals. | `list(string)` | `[]` | no |
+| <a name="input_database_read_principals"></a> [database\_read\_principals](#input\_database\_read\_principals) | List of principal ARNs that will be allowed to read from the Glue database (query tables, describe metadata). Must not contain duplicates or overlap with database\_admin\_principals. | `list(string)` | `[]` | no |
 | <a name="input_enable_bucket_inventory_configs"></a> [enable\_bucket\_inventory\_configs](#input\_enable\_bucket\_inventory\_configs) | Whether to create S3 inventory configurations for the specified buckets | `bool` | `true` | no |
 | <a name="input_inventory_bucket_name"></a> [inventory\_bucket\_name](#input\_inventory\_bucket\_name) | Name of the S3 inventory bucket | `string` | n/a | yes |
 | <a name="input_inventory_config_encryption"></a> [inventory\_config\_encryption](#input\_inventory\_config\_encryption) | Map containing encryption settings for the S3 inventory configuration. | `any` | `{}` | no |
