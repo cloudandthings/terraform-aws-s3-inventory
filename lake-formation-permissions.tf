@@ -38,6 +38,16 @@ resource "aws_lakeformation_permissions" "inventory_database_admin" {
     catalog_id = local.account_id
     name       = var.inventory_database_name
   }
+
+  lifecycle {
+    precondition {
+      condition = length(setintersection(
+        var.database_admin_principals,
+        var.database_read_principals
+      )) == 0
+      error_message = "Database admin and read principals must have no overlapping values. Ensure no principal is in both lists."
+    }
+  }
 }
 
 resource "aws_lakeformation_permissions" "inventory_tables_admin" {
@@ -72,6 +82,16 @@ resource "aws_lakeformation_permissions" "inventory_tables_admin" {
     database_name = var.inventory_database_name
     wildcard      = true
   }
+
+  lifecycle {
+    precondition {
+      condition = length(setintersection(
+        var.database_admin_principals,
+        var.database_read_principals
+      )) == 0
+      error_message = "Database admin and read principals must have no overlapping values. Ensure no principal is in both lists."
+    }
+  }
 }
 
 # ---------------------------------------------------------------------
@@ -89,6 +109,16 @@ resource "aws_lakeformation_permissions" "inventory_database_read" {
     catalog_id = local.account_id
     name       = var.inventory_database_name
   }
+
+  lifecycle {
+    precondition {
+      condition = length(setintersection(
+        var.database_admin_principals,
+        var.database_read_principals
+      )) == 0
+      error_message = "Database admin and read principals must have no overlapping values. Ensure no principal is in both lists."
+    }
+  }
 }
 
 resource "aws_lakeformation_permissions" "inventory_tables_read" {
@@ -103,5 +133,15 @@ resource "aws_lakeformation_permissions" "inventory_tables_read" {
     catalog_id    = local.account_id
     database_name = var.inventory_database_name
     wildcard      = true
+  }
+
+  lifecycle {
+    precondition {
+      condition = length(setintersection(
+        var.database_admin_principals,
+        var.database_read_principals
+      )) == 0
+      error_message = "Database admin and read principals must have no overlapping values. Ensure no principal is in both lists."
+    }
   }
 }

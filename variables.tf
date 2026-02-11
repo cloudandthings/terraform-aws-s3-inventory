@@ -234,17 +234,27 @@ variable "athena_projection_dt_range" {
 #--------------------------------------------------------------------------------------
 
 variable "database_admin_principals" {
-  description = "List of principal ARNs that will be allowed to manage (create, update, delete) the Glue database and its tables"
+  description = "List of principal ARNs that will be allowed to manage (create, update, delete) the Glue database and its tables. Must not contain duplicates or overlap with database_read_principals."
   type        = list(string)
   default = [
     # "arn:aws:iam::123456789012:role/some-management-role"
   ]
+
+  validation {
+    condition     = length(var.database_admin_principals) == length(distinct(var.database_admin_principals))
+    error_message = "The database_admin_principals list must not contain duplicate values."
+  }
 }
 
 variable "database_read_principals" {
-  description = "List of principal ARNs that will be allowed to read from the Glue database (query tables, describe metadata)"
+  description = "List of principal ARNs that will be allowed to read from the Glue database (query tables, describe metadata). Must not contain duplicates or overlap with database_admin_principals."
   type        = list(string)
   default = [
     # "arn:aws:iam::123456789012:role/some-read-role"
   ]
+
+  validation {
+    condition     = length(var.database_read_principals) == length(distinct(var.database_read_principals))
+    error_message = "The database_read_principals list must not contain duplicate values."
+  }
 }
