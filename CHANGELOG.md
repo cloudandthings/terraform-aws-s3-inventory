@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.2](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v2.0.1...v2.0.2) (2026-02-12)
+
+
+### Bug Fixes
+
+* Deterministic bucket name ordering in view to reduce TF plan noise ([c253a9d](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/c253a9d87ba35ed76f6058ff0e0e2c0f5b9a80b3))
+* Ensure LF principals are distinct between read/admin permission sets ([cd2ade9](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/cd2ade9db3946d16905b977377cc1f076aacb851))
+* Validate that source_bucket_names are distinct ([a1f0f90](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/a1f0f901c79fe186c5fe71fef7b0e952a5127c63))
+
 ## [2.0.1](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v2.0.0...v2.0.1) (2026-02-02)
 
 
