@@ -156,4 +156,12 @@ locals {
       local.inventory_fields_to_columns_mapping["dt"]
     ],
   )
+
+  # Convert lists to maps which avoid noisy TF plans when the lists change
+  database_admin_principals = {
+    for x in var.database_admin_principals : x => x
+  }
+  database_read_principals = {
+    for x in var.database_read_principals : x => x
+  }
 }

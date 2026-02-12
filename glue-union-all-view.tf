@@ -6,7 +6,7 @@ locals {
   union_all_sql = join(
     "\nUNION ALL\n",
     [
-      for bucket in var.source_bucket_names :
+      for bucket in sort(local.source_bucket_names) :
       format(
         "SELECT * FROM \"%s\".\"%s\"",
         var.inventory_database_name,

@@ -1,13 +1,3 @@
-locals {
-  # Convert lists to maps which avoid noisy TF plans when the lists change
-  database_admin_principals = {
-    for p in var.database_admin_principals : p => p
-  }
-  database_read_principals = {
-    for p in var.database_read_principals : p => p
-  }
-}
-
 # ---------------------------------------------------------------------
 # ALL Lake Formation Permissions for S3 Inventory Database and Tables
 # ---------------------------------------------------------------------
