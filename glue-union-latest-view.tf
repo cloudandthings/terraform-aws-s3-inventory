@@ -8,7 +8,7 @@ locals {
   union_latest_sql = join(
     "\nUNION ALL\n",
     [
-      for bucket in var.source_bucket_names :
+      for bucket in sort(local.source_bucket_names) :
       "SELECT * FROM \"${var.inventory_database_name}\".\"${bucket}\" WHERE dt >= DATE_FORMAT(date_add('day', -1, CURRENT_DATE), '%Y-%m-%d') AND dt < DATE_FORMAT(CURRENT_DATE, '%Y-%m-%d')"
     ]
   )
