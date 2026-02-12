@@ -50,6 +50,11 @@ variable "source_bucket_names" {
     ])
     error_message = "All bucket names must be valid S3 bucket names (3-63 characters, lowercase letters, numbers, periods, and hyphens only)."
   }
+
+  validation {
+    condition     = length(var.source_bucket_names) == length(distinct(var.source_bucket_names))
+    error_message = "The source_bucket_names list must not contain duplicate values."
+  }
 }
 
 #--------------------------------------------------------------------------------------
