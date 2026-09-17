@@ -226,7 +226,7 @@ variable "athena_projection_dt_range" {
     condition = var.athena_projection_dt_range == null ? true : (
       can(
         regex(
-          "^(NOW([+-]\\d+(DAYS?|MONTHS?|YEARS?))?|\\d{4}-\\d{2}-\\d{2}),(NOW([+-]\\d+(DAYS?|MONTHS?|YEARS?))?|\\d{4}-\\d{2}-\\d{2})$", var.athena_projection_dt_range
+          "^(NOW([+-]\\d+(DAYS?|MONTHS?|YEARS?))?|\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}),(NOW([+-]\\d+(DAYS?|MONTHS?|YEARS?))?|\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2})$", var.athena_projection_dt_range
         )
       )
     )

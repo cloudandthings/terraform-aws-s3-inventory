@@ -182,7 +182,7 @@ resource "aws_s3_bucket_policy" "custom_inventory_bucket_policy" {
 ### Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile | `string` | `null` | no |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region | `string` | `null` | no |
 
@@ -190,14 +190,14 @@ resource "aws_s3_bucket_policy" "custom_inventory_bucket_policy" {
 ### Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_inventory"></a> [inventory](#module\_inventory) | ../../ | n/a |
 
 ----
 ### Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_custom_bucket_policy"></a> [custom\_bucket\_policy](#output\_custom\_bucket\_policy) | The custom bucket policy combining default and additional statements |
 | <a name="output_module_example"></a> [module\_example](#output\_module\_example) | module.inventory |
 
@@ -205,7 +205,7 @@ resource "aws_s3_bucket_policy" "custom_inventory_bucket_policy" {
 ### Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~> 3.4 |
 
@@ -213,7 +213,7 @@ resource "aws_s3_bucket_policy" "custom_inventory_bucket_policy" {
 ### Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.4 |
@@ -222,7 +222,7 @@ resource "aws_s3_bucket_policy" "custom_inventory_bucket_policy" {
 ### Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_glue_catalog_database.s3_inventory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_database) | resource |
 | [aws_s3_bucket.example_data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket.s3_inventory_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |

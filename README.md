@@ -276,7 +276,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_additional_bucket_policy_statements"></a> [additional\_bucket\_policy\_statements](#input\_additional\_bucket\_policy\_statements) | Additional IAM policy statements to include in the bucket policy (will be merged with module's statements) | <pre>list(object({<br/>    Sid       = optional(string)<br/>    Effect    = string<br/>    Principal = any<br/>    Action    = any<br/>    Resource  = any<br/>    Condition = optional(any)<br/>  }))</pre> | `[]` | no |
 | <a name="input_athena_projection_dt_range"></a> [athena\_projection\_dt\_range](#input\_athena\_projection\_dt\_range) | Date range for Athena partition projection (format: START\_DATE,END\_DATE). If null then a value will be generated, see README for more information. | `string` | `null` | no |
 | <a name="input_attach_bucket_policy"></a> [attach\_bucket\_policy](#input\_attach\_bucket\_policy) | Whether module should attach the policy to the inventory bucket.<br/>Set to false if:<br/>- You want to attach the policy yourself using the s3\_bucket\_policy\_json or s3\_bucket\_required\_policy\_json outputs<br/>- The bucket already has a policy and you want to merge them yourself<br/>- You only want to use this module to generate the policy statements | `bool` | `true` | no |
@@ -304,7 +304,7 @@ No modules.
 ### Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_athena_projection_dt_range"></a> [athena\_projection\_dt\_range](#output\_athena\_projection\_dt\_range) | The value used for projection.dt.range on the Glue table |
 | <a name="output_bucket_policy"></a> [bucket\_policy](#output\_bucket\_policy) | Complete bucket policy JSON including required statements and any additional statements. Use this to attach the policy yourself when attach\_bucket\_policy = false |
 | <a name="output_required_bucket_policy"></a> [required\_bucket\_policy](#output\_required\_bucket\_policy) | Required bucket policy JSON (S3 inventory write permissions only). Use with source\_policy\_documents to merge with your custom policy |
@@ -315,14 +315,14 @@ No modules.
 ### Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 
 ----
 ### Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 
@@ -330,7 +330,7 @@ No modules.
 ### Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_glue_catalog_table.s3_inventory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
 | [aws_glue_catalog_table.union_all_view](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
 | [aws_glue_catalog_table.union_latest_view](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
