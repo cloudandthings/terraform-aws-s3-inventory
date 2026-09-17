@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v2.0.2...v2.0.3) (2026-09-17)
+
+
+### Bug Fixes
+
+* Fix athena projection dt range validation bug ([f09c0da](https://github.com/cloudandthings/terraform-aws-s3-inventory/commit/f09c0dae5351ccd219b08708c7f17905a15bc54a))
+
 ## [2.0.2](https://github.com/cloudandthings/terraform-aws-s3-inventory/compare/v2.0.1...v2.0.2) (2026-02-12)
 
 
